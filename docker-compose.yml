@@ -1,0 +1,21 @@
+version: '3.4'
+services:
+  backend:
+    container_name: vhec.ims.backend
+    build:
+      context: ./BE/
+      dockerfile: "Dockerfile"
+    restart: always
+    image: vhec.ims.backend
+    ports:
+      - "8081:80"
+
+  frontend:
+    container_name: vhec.ims.frontend
+    build:
+      context: ./FE/
+      dockerfile: "Dockerfile"
+    restart: always
+    image: vhec.ims.frontend
+    ports:
+      - "80:80"

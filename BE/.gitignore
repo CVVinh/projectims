@@ -1,0 +1,8 @@
+.vscode/
+.vs/
+bin/
+obj/
+Properties/PublishProfiles
+Migrations/
+appsettings.Development.json
+BE.csproj.user

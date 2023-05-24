@@ -1,0 +1,1183 @@
+<template>
+    <header class="navbar navbar-gitlab navbar-expand-sm js-navbar height-header-content">
+        <div class="container-fluid height-header-content">
+            <div class="header-content js-header-content height-header-content">
+                <div
+                    class="title-container hide-when-top-nav-responsive-open gl-transition-medium gl-display-flex gl-align-items-stretch gl-pt-0 gl-mr-3"
+                >
+                    <div class="title">
+                        <span class="gl-sr-only">VHEC</span>
+                        <a id="logo" @click="clickDashboard()">
+                            <img
+                                src="../../assets/logoReview.png"
+                                style="width: 100%; height: 100%; border-radius: 5px"
+                            />
+                        </a>
+                    </div>
+                    <div class="gl-display-flex gl-align-items-center"></div>
+                    <div class="gl-display-none gl-sm-display-block">
+                        <ul class="list-unstyled nav navbar-sub-nav" id="js-top-nav">
+                            <!-- <li class="dropdown header-projects qa-projects-dropdown ms-2">
+                                <a
+                                    class="header-new-dropdown-toggle has-tooltip gl-display-flex dropdown-toggle"
+                                    type="button"
+                                    :class="{ 'active-dropdown-btn': objChange.dropdown.Project.open }"
+                                    :ref="(e) => (objChange.dropdown.Project.Target = e)"
+                                    @click="HandleDropdown('Project')"
+                                >
+                                    Dự án
+                                </a>
+                                <div
+                                    :if="objChange.dropdown.Project.open"
+                                    class="dropdown-menu frequent-items-dropdown-menu dropdown-content-top"
+                                    :class="{ 'show-dropdown': objChange.dropdown.Project.open == true }"
+                                >
+                                    <div class="frequent-items-dropdown-container">
+                                        <div class="frequent-items-dropdown-sidebar qa-projects-dropdown-sidebar">
+                                            <ul>
+                                                <li>
+                                                    <a class="qa-your-projects-link" href="#">
+                                                        <i
+                                                            class="fa-solid fa-house-user me-3"
+                                                            style="font-size: 20px"
+                                                        ></i>
+                                                        Dự án
+                                                        <span>(IMS)</span>
+                                                    </a>
+                                                    <div class="mt-1 project-options-task">
+                                                        <div>
+                                                            <a class="btn"> Thêm dự án </a>
+                                                        </div>
+                                                        <div>
+                                                            <a class="btn"> Dự án</a>
+                                                        </div>
+                                                        <div>
+                                                            <a class="btn"> Bảng dự án</a>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                                <li class="divider"></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li> -->
+                            <li class="dropdown header-projects qa-projects-dropdown ms-2" v-if="checkAccess()">
+                                <a
+                                    class="header-new-dropdown-toggle has-tooltip gl-display-flex dropdown-toggle"
+                                    type="button"
+                                    :class="{ 'active-dropdown-btn': objChange.dropdown.Options.open }"
+                                    :ref="(e) => (objChange.dropdown.Options.Target = e)"
+                                    @click="HandleDropdown('Options')"
+                                >
+                                    <i class="bx bx-vector size"></i> Tùy chọn
+                                </a>
+                                <div
+                                    :if="objChange.dropdown.Options.open"
+                                    class="dropdown-menu frequent-items-dropdown-menu dropdown-content-top"
+                                    :class="{ 'show-dropdown': objChange.dropdown.Options.open == true }"
+                                >
+                                    <div class="frequent-items-dropdown-container">
+                                        <div class="frequent-items-dropdown-sidebar qa-projects-dropdown-sidebar">
+                                            <ul>
+                                                <li class="cursor-pointer">
+                                                    <a class="qa-your-projects-link" @click="openDialogProject()"
+                                                        >Thêm dự án
+                                                    </a>
+                                                </li>
+                                                <li class="cursor-pointer" v-if="checkAdmin()">
+                                                    <a class="qa-your-projects-link" @click="openDialogUser()"
+                                                        >Thêm người dùng
+                                                    </a>
+                                                </li>
+                                                <!-- <li class="cursor-pointer">
+                                                    <a @click="clickAddTask()" class="qa-your-projects-link"
+                                                        >Thêm công việc</a
+                                                    >
+                                                </li> -->
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <!-- <li class="dropdown header-projects qa-projects-dropdown ms-2">
+                                <a
+                                    class="header-new-dropdown-toggle has-tooltip gl-display-flex"
+                                    type="button"
+                                    :class="{ 'active-dropdown-btn': objChange.dropdown.Wikis.open }"
+                                    :ref="(e) => (objChange.dropdown.Wikis.Target = e)"
+                                    @click="HandleDropdown('WikiTs')"
+                                >
+                                    Thông tin
+                                </a>
+                            </li> -->
+
+                            <li class="dropdown header-projects qa-projects-dropdown ms-2">
+                                <a
+                                    class="header-new-dropdown-toggle has-tooltip gl-display-flex"
+                                    type="button"
+                                    :class="{ 'active-dropdown-btn': objChange.dropdown.Wikis.open }"
+                                    :ref="(e) => (objChange.dropdown.Wikis.Target = e)"
+                                    @click="openAddBlog"
+                                >
+                                    <i class="bx bx-edit size"></i> Thêm bài viết
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- <div
+                    class="navbar-collapse gl-transition-medium collapse gl-mr-auto global-search-container hide-when-top-nav-responsive-open ms-2"
+                >
+                    <ul class="nav navbar-nav gl-w-full gl-align-items-center">
+                        <li class="nav-item header-search-new gl-display-none gl-lg-display-block gl-w-full">
+                            <div class="header-search is-not-active gl-relative gl-w-full" id="js-header-search">
+                                <form>
+                                    <div class="gl-search-box-by-type">
+                                        <i
+                                            class="fa-sharp fa-solid fa-magnifying-glass s16 gl-search-box-by-type-search-icon gl-icon"
+                                        ></i>
+                                        <input
+                                            autocomplete="off"
+                                            class="form-control gl-form-input gl-search-box-by-type-input"
+                                            id="search"
+                                            :class="{ 'active-dropdown-btn': objChange.dropdown.Search.open }"
+                                            :ref="(e) => (objChange.dropdown.Search.Target = e)"
+                                            name="search"
+                                            @click="HandleDropdown('Search')"
+                                            placeholder="Search"
+                                            type="text"
+                                        />
+                                    </div>
+                                    <kbd
+                                        class="gl-absolute gl-right-3 gl-top-0 keyboard-shortcut-helper gl-z-index-1 has-tooltip"
+                                        title="Use the shortcut key &lt;kbd&gt;/&lt;/kbd&gt; to start a search"
+                                    >
+                                        /
+                                    </kbd>
+                                </form>
+                            </div>
+                        </li>
+                        <li class="nav-item d-none d-sm-inline-block d-lg-none">
+                            <a title="Search" aria-label="Search" href="#">
+                                <i class="fa-sharp fa-solid fa-magnifying-glass s16"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div> -->
+                <div class="navbar-collapse gl-transition-medium collapse" :class="{ isToggle: objChange.isToggle }">
+                    <ul class="nav navbar-nav gl-w-full gl-align-items-center gl-justify-content-end">
+                        <!-- <li class="header-new dropdown gl-display-none gl-sm-display-block gl-text-right">
+                            <a
+                                class="header-new-dropdown-toggle has-tooltip gl-display-flex dropdown-toggle"
+                                type="button"
+                                :class="{ 'active-dropdown-btn': objChange.dropdown.Create.open }"
+                                :ref="(e) => (objChange.dropdown.Create.Target = e)"
+                                @click="HandleDropdown('Create')"
+                            >
+                                <i class="fa-solid fa-square-plus s16" style="font-size: 16px"></i>
+                            </a>
+
+                            <div
+                                :if="objChange.dropdown.Create.open"
+                                class="dropdown-menu dropdown-menu-right"
+                                :class="{ 'show-dropdown': objChange.dropdown.Create.open === true }"
+                            >
+                                <ul>
+                                    <li><h6 class="dropdown-header">This project</h6></li>
+                                    <li><a class="dropdown-item" href="#">New issue</a></li>
+                                    <li><a class="dropdown-item" href="#">New merge request</a></li>
+                                    <li><a class="dropdown-item" href="#">New snippet</a></li>
+                                    <li class="divider"></li>
+                                    <li><h6 class="dropdown-header">GitLab</h6></li>
+                                    <li><a class="dropdown-item" href="#">New project/repository</a></li>
+                                    <li><a class="dropdown-item" href="#">New group</a></li>
+                                    <li><a class="dropdown-item" href="#">New snippet</a></li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <li class="user-counter">
+                            <a title="Issues" class="dashboard-shortcuts-issues js-prefetch-document" href="#">
+                                <i class="fa-solid fa-box-tissue" style="font-size: 16px"> </i>
+                                <span
+                                    aria-label="0 assigned issues"
+                                    class="gl-badge badge badge-pill badge-success sm gl-ml-n2 gl-display-none"
+                                    >0
+                                </span>
+                            </a>
+                        </li>
+
+                        <li class="user-counter dropdown">
+                            <a
+                                class="dashboard-shortcuts-merge_requests dropdown-toggle"
+                                href="#"
+                                title="Merge requests"
+                                :class="{ 'active-dropdown-btn': objChange.dropdown.Merge.open }"
+                                :ref="(e) => (objChange.dropdown.Merge.Target = e)"
+                                @click="HandleDropdown('Merge')"
+                            >
+                                <i class="fa-solid fa-code-pull-request" style="font-size: 16px"> </i>
+                                <span
+                                    class="gl-badge badge badge-pill badge-warning sm js-merge-requests-count gl-ml-n2 gl-display-none"
+                                    >0
+                                </span>
+                            </a>
+                            <div
+                                :if="objChange.dropdown.Merge.open"
+                                class="dropdown-menu dropdown-menu-right dropdown-content-top"
+                                :class="{ 'show-dropdown': objChange.dropdown.Merge.open === true }"
+                            >
+                                <ul>
+                                    <li class="dropdown-header">Merge requests</li>
+                                    <li>
+                                        <a class="d-flex dropdown-item" href="#"
+                                            >Assigned to you <span class="gl-badge-count">0</span></a
+                                        >
+                                    </li>
+                                    <li>
+                                        <a class="d-flex dropdown-item" href="#"
+                                            >Review requests for you <span class="gl-badge-count">0</span></a
+                                        >
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <li class="user-counter">
+                            <a title="To-Do List" class="shortcuts-todos" href="#">
+                                <i class="fa-solid fa-square-check" style="font-size: 16px"></i>
+                                <span class="gl-badge badge badge-pill badge-info sm js-todos-count gl-ml-n2 hidden"
+                                    >0
+                                </span></a
+                            >
+                        </li> -->
+
+                        <li class="nav-item header-help dropdown d-none d-md-block" v-if="showNotification">
+                            <a
+                                class="header-help-dropdown-toggle dropdown-toggle gl-relative"
+                                data-toggle="dropdown"
+                                :class="{
+                                    'active-dropdown-btn': objChange.dropdown.Help.open,
+                                }"
+                                :ref="(e) => (objChange.dropdown.Help.Target = e)"
+                                @click="HandleDropdown('Help')"
+                            >
+                                <span class="gl-sr-only"> Notifications </span>
+                                <div v-if="count <= 0">
+                                    <i class="fa-regular fa-bell" style="font-size: 16px"></i>
+                                </div>
+                                <div v-else>
+                                    <i
+                                        class="fa-regular fa-bell"
+                                        :class="{ 'ring-animation': hasNewData }"
+                                        style="font-size: 16px"
+                                    ></i>
+                                </div>
+
+                                <div class="main-count-noti">
+                                    <span class="badge badge-pill todos-count js-todos-count main-acount-noti-span">{{
+                                        count
+                                    }}</span>
+                                </div>
+
+                                <span class="notification-dot rounded-circle gl-absolute"></span>
+                            </a>
+                            <div
+                                :if="objChange.dropdown.Help.open"
+                                style="width: 375px"
+                                class="dropdown-menu dropdown-menu-right dropdown-content-top"
+                                :class="{ 'show-dropdown': objChange.dropdown.Help.open === true }"
+                            >
+                                <div class="d-flex border-bottom border-1 pb-2">
+                                    <div class="p-2">
+                                        <span class="noti-header-left">Thông báo mới </span>
+                                    </div>
+                                </div>
+
+                                <ul style="padding: 3px">
+                                    <ScrollPanel style="width: 100%; height: 400px; padding: 0px 10px 0px 0px">
+                                        <li
+                                            :class="{ 'is-watch': items.isWatched, 'default-watch': !items.isWatched }"
+                                            v-for="items in noti"
+                                            :key="items.id"
+                                            class="border-bottom border-1 item-info mt-1 mb-1 d-flex align-items-center"
+                                            style="padding: 5px 0px 5px 0px; height: 110px; cursor: pointer"
+                                        >
+                                            <button
+                                                :disabled="items.link == null"
+                                                style="text-decoration: none; color: inherit; height: inherit"
+                                                @click="redictoAction(items)"
+                                            >
+                                                <div class="mb-1">
+                                                    <span class="noti-name-text" style="font-size: 14px">
+                                                        {{ items.title }}</span
+                                                    >
+                                                </div>
+                                                <div class="mb-1">
+                                                    <h6 class="three-line-paragraph" :title="items.message">
+                                                        {{ items.message }}
+                                                    </h6>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <h6
+                                                        class="noti-time-text"
+                                                        style="font-style: italic; font-size: 14px"
+                                                    >
+                                                        {{ formartDate(items.dateCreated) }}
+                                                    </h6>
+                                                </div>
+                                            </button>
+                                        </li>
+                                    </ScrollPanel>
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item header-user js-nav-user-dropdown dropdown" id="dropdown-responsive-leavoff">
+                            <a
+                                class="header-user-dropdown-toggle dropdown-toggle"
+                                href="#"
+                                :class="{ 'active-dropdown-btn': objChange.dropdown.LeaveOff.open }"
+                                :ref="(e) => (objChange.dropdown.LeaveOff.Target = e)"
+                                @click="HandleDropdown('LeaveOff')"
+                            >
+                                <i class="bx bx-log-out-circle" style="font-size: 20px"></i>
+                            </a>
+                            <div
+                                :if="objChange.dropdown.LeaveOff.open"
+                                class="dropdown-menu dropdown-menu-right dropdown-content-top"
+                                :class="{ 'show-dropdown': objChange.dropdown.LeaveOff.open === true }"
+                            >
+                                <ul>
+                                    <li v-if="checkLeadOfficeStaff()">
+                                        <router-link
+                                            :to="{ name: 'LeaveOffRegisterlists', params: {} }"
+                                            class="py-2 ripple list-group-item-action"
+                                        >
+                                            <span class="padding-left-chill">Đăng ký</span>
+                                        </router-link>
+                                    </li>
+                                    <li
+                                        class="divider"
+                                        v-if="
+                                            checkAdmin() === true
+                                                ? true
+                                                : checkAction(checkLeadOfficeStaff(), checkRegisterOrAccept())
+                                        "
+                                    ></li>
+                                    <li v-if="checkRegisterOrAccept()">
+                                        <router-link
+                                            :to="{ name: 'Acceptregisterlists', params: {} }"
+                                            class="py-2 ripple list-group-item-action"
+                                        >
+                                            <span class="padding-left-chill">Duyệt</span>
+                                        </router-link>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <li class="nav-item header-user js-nav-user-dropdown dropdown">
+                            <a
+                                class="header-user-dropdown-toggle dropdown-toggle"
+                                href="#"
+                                :class="{ 'active-dropdown-btn': objChange.dropdown.User.open }"
+                                :ref="(e) => (objChange.dropdown.User.Target = e)"
+                                @click="HandleDropdown('User')"
+                            >
+                                <img
+                                    class="gl-avatar gl-avatar-s24 header-user-avatar gl-avatar-circle"
+                                    height="24"
+                                    width="24"
+                                    loading="lazy"
+                                    style="object-fit: cover"
+                                    :src="
+                                        avarta ??
+                                        'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png'
+                                    "
+                                />
+                            </a>
+
+                            <div
+                                :if="objChange.dropdown.User.open"
+                                class="dropdown-menu dropdown-menu-right dropdown-content-top"
+                                :class="{ 'show-dropdown': objChange.dropdown.User.open === true }"
+                            >
+                                <ul>
+                                    <li class="current-user">
+                                        <a class="gl-line-height-20!" href="#">
+                                            <div class="gl-font-weight-bold">{{ userName }}</div>
+                                        </a>
+                                    </li>
+                                    <li class="divider"></li>
+                                    <li v-for="(item, index) in moreMenuItemsUser" :key="index">
+                                        <router-link :to="item.path"> {{ item.label }}</router-link>
+                                        <div class="border-bottom border-1 mt-1 mb-1"></div>
+                                    </li>
+                                    <!-- <li
+                                        v-for="(item, index) in moreMenuItemsSupport"
+                                        :key="index"
+                                        class="d-md-none"
+                                        style="border-bottom: ridge"
+                                    >
+                                        <router-link :to="item.path" :target="item.target" :class="item.class">
+                                            {{ item.label }}</router-link
+                                        >
+                                    </li> -->
+                                    <li class="cursor-pointer">
+                                        <a class="sign-out-link" @click="() => HandlerLogout()">Đăng xuất</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <button
+                    class="navbar-toggler d-block d-sm-none gl-border-none!"
+                    type="button"
+                    @click="() => HandleToggle()"
+                >
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="more-icon gl-px-3 gl-font-sm gl-font-weight-bold" v-if="objChange.isToggle === false">
+                        <span class="gl-pr-2">Menu</span>
+                        <i class="fa-solid fa-bars" style="font-size: 16px"></i>
+                    </span>
+                    <span v-else class="more-icon gl-px-3 gl-font-sm gl-font-weight-bold">
+                        <i class="fa-sharp fa-solid fa-xmark" style="font-size: 16px"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </header>
+    <DialogAddEdit
+        :isOpenDialog="DialogProject.isOpenProject"
+        :projectSelected="{ ...DialogProject.projectSelected }"
+        @closeDialog="closeDialogProject()"
+        :user="DialogProject.user"
+        :leader="DialogProject.leader"
+    />
+
+    <AddBlog :status="openStatus" @closemodal="closeAddBlog()" />
+    <AddUserDiaLog
+        :statusopen="DialogUser.isOpenUser"
+        @closeAdd="closeDialogUser()"
+        :roleoption="DialogUser.listRole"
+    />
+</template>
+
+<script setup>
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { GET_ALL_PROJECT, GET_FIREBASE_TOKEN, HTTP, HTTP_API_GITLAB } from '@/http-common'
+import { HttpStatus } from '@/config/app.config'
+import { ProjectDto } from '@/views/Project/Project.dto'
+import DialogAddEdit from '@/views/Project/DialogAddEdit.vue'
+import AddUserDiaLog from '@/views/Users/AddUserDiaLog.vue'
+import AddBlog from '@/views/Blog/DialogAddBlog.vue'
+import dayjs from 'dayjs'
+const router = useRouter()
+let DialogProject = reactive({
+    isOpenProject: false,
+    users: [],
+    leader: [],
+    projectSelected: new ProjectDto(),
+})
+
+let openStatus = ref(false)
+let DialogUser = reactive({
+    isOpenUser: false,
+    listRole: [],
+})
+let hasNewData = reactive({
+    hasNewData: true,
+})
+
+let objChange = reactive({
+    isToggle: false,
+    dropdown: {
+        Create: { open: false, Target: {} },
+        Merge: { open: false, Target: {} },
+        Help: { open: false, Target: {} },
+        User: { open: false, Target: {} },
+        Project: { open: false, Target: {} },
+        Search: { open: false, Target: {} },
+        Options: { open: false, Target: {} },
+        Wikis: { open: false, Target: {} },
+        LeaveOff: { open: false, Target: {} },
+    },
+})
+
+function openDialogProject() {
+    DialogProject.isOpenProject = true
+    DialogProject.projectSelected = []
+}
+
+function closeDialogProject() {
+    DialogProject.isOpenProject = false
+    DialogProject.projectSelected = []
+}
+
+function openDialogUser() {
+    DialogUser.isOpenUser = true
+}
+
+function openAddBlog() {
+    openStatus.value = true
+}
+function closeAddBlog() {
+    openStatus.value = false
+}
+
+const checkRegisterOrAccept = () => {
+    if (checkAccessModule.getListGroup().includes('1') === true) {
+        return true
+    } else {
+        if (checkAccessModule.getListGroup().includes('5')) {
+            return true
+        } else {
+            return false
+        }
+    }
+}
+
+const checkLeadOfficeStaff = () => {
+    if (checkAccessModule.getListGroup().includes('1')) {
+        return true
+    } else {
+        if (
+            checkAccessModule.getListGroup().includes('2') ||
+            checkAccessModule.getListGroup().includes('3') ||
+            checkAccessModule.getListGroup().includes('4')
+        ) {
+            return true
+        } else {
+            return false
+        }
+    }
+}
+
+function closeDialogUser() {
+    DialogUser.isOpenUser = false
+}
+
+const moreMenuItemsUser = ref([
+    {
+        label: 'Cập nhật tài khoản',
+        path: '/profile',
+    },
+    {
+        label: 'Thay đổi mật khẩu',
+        path: '/changepass',
+    },
+])
+
+const moreMenuItemsSupport = ref([
+    {
+        label: 'Help',
+        path: '#',
+        target: '',
+        class: '',
+    },
+    {
+        label: 'Support',
+        path: '#',
+        target: '',
+        class: '',
+    },
+    {
+        label: 'Community forum',
+        path: '#',
+        target: '_blank',
+        class: 'text-nowrap',
+    },
+    {
+        label: 'Submit feedback',
+        path: '#',
+        target: '',
+        class: '',
+    },
+    {
+        label: 'Contribute to GitLab ',
+        path: '#',
+        target: '_blank',
+        class: 'text-nowrap',
+    },
+])
+
+const user = ref({
+    name: localStorage.getItem('name'),
+})
+const userName = jwt_decode(localStorage.getItem('token')).fullName
+const avarta = jwt_decode(localStorage.getItem('token')).avatarLink
+
+const search = ''
+function checkLogin() {
+    if (user.value.name == null) {
+        user.value.name = 'Login'
+    }
+}
+checkLogin()
+
+function clickAddTask() {
+    router.push({ name: 'addtask' })
+}
+
+function clickDashboard() {
+    router.replace('/')
+}
+
+const HandlerLogout = async () => {
+    const response = await HTTP.post('Users/Logout', jwt_decode(localStorage.getItem('token')).userCode)
+    if (response.status === HttpStatus.OK) {
+        localStorage.clear()
+        window.location = '/login'
+    }
+}
+
+const HandleToggle = () => {
+    objChange.isToggle = !objChange.isToggle
+}
+
+function HandleDropdown(option) {
+    const closeListerner = (e) => {
+        if (CatchOutsideClick(e, option, objChange.dropdown[option])) {
+            window.removeEventListener('click', closeListerner)
+            objChange.dropdown[option].open = false
+        }
+    }
+    window.addEventListener('click', closeListerner)
+    objChange.dropdown[option].open = !objChange.dropdown[option].open
+}
+
+function CatchOutsideClick(event, option, dropdown) {
+    if (dropdown.Target == event.target) return false
+    if (objChange.dropdown[option].open && dropdown.Target != event.target) return true
+}
+
+function formartDate(date) {
+    const fmDate = new Date(date)
+    return dayjs(fmDate).format('DD/MM/YYYY HH:mm:ss')
+}
+
+onMounted(() => {})
+</script>
+<script>
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
+import { HTTP_SINGNALRHUB } from '@/http-common'
+import { NotificationService } from '@/service/notification.service'
+import jwt_decode from 'jwt-decode'
+import { checkAccessModule } from '@/helper/checkAccessModule'
+import { HTTP_FIREBASE } from '@/helper/firebase.helper'
+export default {
+    data() {
+        return {
+            noti: [],
+            count: 0,
+            hasNewData: false,
+            avatar: '',
+            showNotification: false,
+            decodeToken: null,
+            dataProjects: [],
+            targetTime: new Date(),
+        }
+    },
+    created() {
+        this.decodeToken = jwt_decode(localStorage.getItem('token'))
+        var checkListGroup = Object.values(this.decodeToken.listGroup)
+        if (checkListGroup.includes('1') || checkListGroup.includes('5') || checkListGroup.includes('3') || checkListGroup.includes('4')) {
+            this.showNotification = true
+        }
+        if (this.showNotification) {
+            const connection = new HubConnectionBuilder()
+                .withUrl(HTTP_SINGNALRHUB)
+                .configureLogging(LogLevel.Information)
+                .build()
+            connection.on('ReceiveLeaveOff', () => {
+                this.getNotification('Có thông báo mới !!!')
+            })
+            connection.start()
+        }
+    },
+    async mounted() {
+        await this.handlerGetInfoProjects()
+        if (this.showNotification) {
+            this.getNotification(null)
+        }
+        this.calculationTimeToGetApi();
+    },
+    watch: {
+        noti: {
+            handler: function Change() {
+                this.counts()
+            },
+        },
+    },
+    methods: {
+        async calculationTimeToGetApi(){
+            this.targetTime.setHours(16,0,0,0);
+            const currentTime = new Date();
+            let delay = this.targetTime - currentTime;
+            if (delay < 0) {
+                delay += 24 * 60 * 60 * 1000; 
+            }
+            setTimeout(async () => {
+                if(this.checkAdmin()) await this.getApiNotiTimeSheetDailys();
+                this.getNotification('Nhập timesheet hôm nay!');
+                setInterval(async () => {
+                    await this.getApiNotiTimeSheetDailys();
+                }, 24 * 60 * 60 * 1000);
+            }, delay);
+        },
+        async getApiNotiTimeSheetDailys(){
+            await NotificationService.CreateNotificationTimeSheetDailys().then(async res => {
+                try {
+                    const res = await HTTP.get(GET_FIREBASE_TOKEN)
+                    const registrationIds = res.data.map((item) => item.token)
+                    const message = {
+                        registration_ids: registrationIds,
+                        notification: {
+                            title: 'Thông báo đến từ IMS',
+                            body: 'Nhập timesheet hôm nay!',
+                        },
+                        webpush: {
+                            headers: {
+                                Urgency: 'high',
+                            },
+                        },
+                    }
+                    const response = await HTTP_FIREBASE.post('/fcm/send', message)
+                } catch (error) {
+                    console.log('Error sending message', error)
+                }
+            }).catch(err => {
+                console.log(err);
+            });
+        },
+
+        counts() {
+            let count1 = this.noti.filter(function (element) {
+                return element.isWatched == false
+            })
+            this.count = count1.length <= 0 ? 0 : count1.length
+        },
+        getAllProects(page) {
+            return HTTP_API_GITLAB.get(GET_ALL_PROJECT(100, page))
+                .then((res) => res.data)
+                .catch((err) => console.log(err))
+        },
+
+        async handlerGetInfoProjects() {
+            let resultCountPr = 100
+            let resultPr = []
+            let page = 1
+            while (resultCountPr === 100) {
+                let newResultsPr = await this.getAllProects(page)
+                page++
+                await this.dataProjects.push(...newResultsPr)
+                resultCountPr = newResultsPr.length
+                resultPr = resultPr.concat(newResultsPr)
+                newResultsPr.map((el) => {
+                    return (el.name = `${el.name} (${el.name_with_namespace})`)
+                })
+            }
+        },
+        checkAccess() {
+            if (checkAccessModule.getListGroup().includes('1') || checkAccessModule.getListGroup().includes('5')) {
+                return true
+            } else {
+                return false
+            }
+        },
+
+        checkAdmin() {
+            if (checkAccessModule.getListGroup().includes('1')) {
+                return true
+            } else {
+                return false
+            }
+        },
+
+        checkAction(other, pm) {
+            if (other === true && pm === false) {
+                return false
+            } else {
+                if (other === false && pm === true) {
+                    return false
+                }
+            }
+        },
+
+        redictoAction(item) {
+            this.putNotification(item.id)
+            this.$router.replace({ path: item.link })
+        },
+
+        getNotification(meess) {
+            if (checkAccessModule.getListGroup().includes('1')) {
+                NotificationService.getAllNotification().then((res) => {
+                    let count1 = res.data.filter(function (element) {
+                        return element.isWatched == false
+                    })
+                    this.count = count1.length <= 0 ? 0 : count1.length
+                    res.data.forEach((el) => {
+                        this.noti.push({
+                            categoryModule: el.categoryModule,
+                            dateCreated: el.dateCreated,
+                            dateDeleted: el.dateDeleted,
+                            dateUpdated: el.dateUpdated,
+                            id: el.id,
+                            isDeleted: el.isDeleted,
+                            isRequireDelete: el.isRequireDelete,
+                            isWatched: el.isWatched,
+                            link: el.link,
+                            message: el.message,
+                            receiveUser: el.receiveUser,
+                            requestUser: el.requestUser,
+                            title: el.title,
+                            userCreated: el.userCreated,
+                            userDeleted: el.userDeleted,
+                            userUpdated: el.userUpdated,
+                            usercode: el.usercode,
+                            countNoti: count1.length <= 0 ? 0 : count1.length,
+                        })
+                    })
+                    if (meess != null) {
+                        this.toastInfo(meess)
+                    }
+                })
+            } else {
+                if (checkAccessModule.getListGroup().includes('5')) {
+                    NotificationService.GetAllNotificationOfPm(checkAccessModule.getUserIdCurrent()).then((res) => {
+                        let count1 = res.data.filter(function (element) {
+                            return element.isWatched == false
+                        })
+                        this.count = count1.length <= 0 ? 0 : count1.length
+                        res.data.forEach((el) => {
+                            this.noti.push({
+                                categoryModule: el.categoryModule,
+                                dateCreated: el.dateCreated,
+                                dateDeleted: el.dateDeleted,
+                                dateUpdated: el.dateUpdated,
+                                id: el.id,
+                                isDeleted: el.isDeleted,
+                                isRequireDelete: el.isRequireDelete,
+                                isWatched: el.isWatched,
+                                link: el.link,
+                                message: el.message,
+                                receiveUser: el.receiveUser,
+                                requestUser: el.requestUser,
+                                title: el.title,
+                                userCreated: el.userCreated,
+                                userDeleted: el.userDeleted,
+                                userUpdated: el.userUpdated,
+                                usercode: el.usercode,
+                                countNoti: count1.length <= 0 ? 0 : count1.length,
+                            })
+                        })
+                        if (meess != null) {
+                            this.toastInfo(meess)
+                        }
+                    })
+                } else {
+                    if (checkAccessModule.getListGroup().includes('3')) {
+                        NotificationService.GetAllNotificationOfLead(checkAccessModule.getUserIdCurrent()).then(
+                            (res) => {
+                                let count1 = res.data.filter(function (element) {
+                                    return element.isWatched == false
+                                })
+                                this.count = count1.length <= 0 ? 0 : count1.length
+                                res.data.forEach((el) => {
+                                    this.noti.push({
+                                        categoryModule: el.categoryModule,
+                                        dateCreated: el.dateCreated,
+                                        dateDeleted: el.dateDeleted,
+                                        dateUpdated: el.dateUpdated,
+                                        id: el.id,
+                                        isDeleted: el.isDeleted,
+                                        isRequireDelete: el.isRequireDelete,
+                                        isWatched: el.isWatched,
+                                        link: el.link,
+                                        message: el.message,
+                                        receiveUser: el.receiveUser,
+                                        requestUser: el.requestUser,
+                                        title: el.title,
+                                        userCreated: el.userCreated,
+                                        userDeleted: el.userDeleted,
+                                        userUpdated: el.userUpdated,
+                                        usercode: el.usercode,
+                                        countNoti: count1.length <= 0 ? 0 : count1.length,
+                                    })
+                                })
+                                if (meess != null) {
+                                    this.toastInfo(meess)
+                                }
+                            },
+                        )
+                    }
+                    else if (checkAccessModule.getListGroup().includes('4')) {
+                        NotificationService.GetAllNotificationTimeSheetDailys().then(
+                            (res) => {
+                                let count1 = res.data.filter(function (element) {
+                                    return element.isWatched == false
+                                })
+                                this.count = count1.length <= 0 ? 0 : count1.length
+                                res.data.forEach((el) => {
+                                    this.noti.push({
+                                        categoryModule: el.categoryModule,
+                                        dateCreated: el.dateCreated,
+                                        dateDeleted: el.dateDeleted,
+                                        dateUpdated: el.dateUpdated,
+                                        id: el.id,
+                                        isDeleted: el.isDeleted,
+                                        isRequireDelete: el.isRequireDelete,
+                                        isWatched: el.isWatched,
+                                        link: el.link,
+                                        message: el.message,
+                                        receiveUser: el.receiveUser,
+                                        requestUser: el.requestUser,
+                                        title: el.title,
+                                        userCreated: el.userCreated,
+                                        userDeleted: el.userDeleted,
+                                        userUpdated: el.userUpdated,
+                                        usercode: el.usercode,
+                                        countNoti: count1.length <= 0 ? 0 : count1.length,
+                                    })
+                                })
+                                if (meess != null) {
+                                    this.toastInfo(meess)
+                                }
+                            },
+                        )
+                    }
+                }
+            }
+        },
+        putNotification(id) {
+            return NotificationService.isWatchNotification(id).then((res) => {
+                res.data
+                this.noti = []
+                this.getNotification(null)
+            })
+        },
+        toastInfo(message) {
+            this.$toast.add({
+                severity: 'info',
+                summary: 'Thông báo',
+                detail: message,
+                life: 3000,
+            })
+        },
+    },
+}
+</script>
+<style scoped>
+@import '../../styles/Css/header.css';
+.is-watch {
+    background-color: white;
+}
+.default-watch {
+    background-color: rgba(131, 127, 127, 0.58);
+}
+/* .item-info:hover {
+        background-color: rgba(209, 209, 240, 0.2);
+    } */
+.isToggle {
+    display: flex !important;
+    flex: 1 1 auto !important;
+}
+.size {
+    font-size: 18px;
+    margin-right: 5px;
+}
+.sizeoptions {
+    font-size: 12px;
+    margin-right: 3px;
+}
+.show-dropdown {
+    display: block !important;
+}
+.dropdown-menu-right {
+    right: 0 !important;
+    left: auto !important;
+}
+.dropdown-content-top {
+    margin-top: 12px !important;
+}
+.gl-badge-count {
+    border-radius: 10rem;
+    margin-left: auto;
+    padding-top: 0;
+    padding-bottom: 0;
+    background-color: #dcdcde;
+    color: #535158;
+    width: 15px;
+    justify-content: center;
+    display: inline-flex;
+}
+.active-dropdown-btn {
+    color: black !important;
+    background-color: #fff !important;
+    pointer-events: none !important;
+}
+
+.active-noti {
+    background: black !important;
+}
+.cursor-pointer {
+    cursor: pointer;
+}
+.project-options-task {
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+}
+.height-header-content {
+    height: 42px;
+}
+.navbar-gitlab .container-fluid .navbar-nav li .badge.badge-pill[data-v-0a3a650e]:not(.gl-badge) {
+    box-shadow: none;
+    font-weight: 600;
+    color: whitesmoke;
+}
+.navbar-gitlab .container-fluid .navbar-nav li .badge.badge-pill[data-v-0a3a650e]:not(.gl-badge):before {
+    box-shadow: none;
+    font-weight: 600;
+}
+.main-count-noti {
+    height: 17px;
+    width: 17px;
+    margin-left: 2px;
+    position: relative;
+    top: -7px;
+    right: 2px;
+}
+.main-acount-noti-span {
+    background: red !important;
+    /* background: linear-gradient(to bottom left, #ef8d9c 40%, #ffc39e 100%); */
+    width: inherit;
+    height: inherit;
+    line-height: 9px;
+}
+.noti-time-text {
+    margin-top: 10px;
+    color: gray;
+}
+.noti-name-text {
+    font-weight: 500;
+}
+.noti-header-left {
+    font-weight: 800;
+    margin-left: 3px;
+}
+.dropdown-menu.dropdown-menu-right.dropdown-content-top.show-dropdown {
+    width: 300px;
+}
+.ring-animation {
+    animation: ring 0.5s infinite;
+}
+@keyframes ring {
+    0% {
+        transform: rotate(0);
+    }
+    1% {
+        transform: rotate(30deg);
+    }
+    3% {
+        transform: rotate(-28deg);
+    }
+    5% {
+        transform: rotate(34deg);
+    }
+    7% {
+        transform: rotate(-32deg);
+    }
+    9% {
+        transform: rotate(30deg);
+    }
+    11% {
+        transform: rotate(-28deg);
+    }
+    13% {
+        transform: rotate(26deg);
+    }
+    15% {
+        transform: rotate(-24deg);
+    }
+    17% {
+        transform: rotate(22deg);
+    }
+    19% {
+        transform: rotate(-20deg);
+    }
+    21% {
+        transform: rotate(18deg);
+    }
+    23% {
+        transform: rotate(-16deg);
+    }
+    25% {
+        transform: rotate(14deg);
+    }
+    27% {
+        transform: rotate(-12deg);
+    }
+    29% {
+        transform: rotate(10deg);
+    }
+    31% {
+        transform: rotate(-8deg);
+    }
+    33% {
+        transform: rotate(6deg);
+    }
+    35% {
+        transform: rotate(-4deg);
+    }
+    37% {
+        transform: rotate(2deg);
+    }
+    39% {
+        transform: rotate(-1deg);
+    }
+    41% {
+        transform: rotate(1deg);
+    }
+
+    43% {
+        transform: rotate(0);
+    }
+    100% {
+        transform: rotate(0);
+    }
+}
+.text-h7 {
+    margin-top: 5px;
+    margin-bottom: 2px;
+    color: gray;
+    font-size: 14px;
+    padding: 0px 0px 2px 0px;
+}
+.three-line-paragraph {
+    display: block;
+    display: -webkit-box;
+    line-height: 16px;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    visibility: visible;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    color: gray;
+    font-size: 14px;
+    padding: 0px 0px 2px 0px;
+}
+#dropdown-responsive-leavoff {
+    display: none;
+}
+@media (max-width: 573px) {
+    #dropdown-responsive-leavoff {
+        display: block !important;
+    }
+}
+</style>
+
+

@@ -1,0 +1,147 @@
+.breadcrumb-item + .breadcrumb-item::before {
+    float: left;
+    padding-right: var(--bs-breadcrumb-item-padding-x);
+    color: var(--bs-breadcrumb-divider-color);
+    content: var(--bs-breadcrumb-divider, '>');
+}
+.breadcrumb-item {
+    cursor: pointer;
+    font-weight: 500;
+}
+.breadcrumb-item.active {
+    font-weight: 500;
+}
+.breadcrumb-item a {
+    color: #868686;
+}
+.breadcrumb-item:hover {
+    text-decoration: underline !important;
+    color: #868686;
+}
+.custom-header-gitlab {
+    width: 100%;
+    height: 50px;
+    border-top: 1px solid #dbdbdb;
+    border-bottom: 1px solid #dbdbdb;
+    padding-top: 6px;
+}
+.custom-button-h {
+    height: 34px;
+    /* background-color: #1f75cb;
+        box-shadow: inset 0 0 0 1px #1068bf; */
+    color: #fff;
+    padding: 10px !important;
+    border-radius: 3px !important;
+}
+
+.CustomButtonPrimeVue {
+    height: 33px;
+    font-size: 15px;
+}
+
+.custom-header-gitlab .row {
+    height: inherit;
+}
+.custom-input-h {
+    padding: 5px 10px !important;
+    border-radius: 3px !important;
+}
+.custom-input-number-h {
+    border-radius: 3px !important;
+    height: 76%;
+    width: 100%;
+}
+.custom-reload-h {
+    padding: 5px 10px !important;
+    background: #dbdbdb !important;
+    border: 1px solid #dbdbdb !important;
+    color: #7e7474 !important;
+    border-radius: 3px !important;
+    height: 35px;
+}
+.custom-reload-h:hover {
+    background: #b6b8bd !important;
+    color: #ffffff !important;
+    border-color: #b6b8bd !important;
+}
+.custom-input-h .p-multiselect-label-container .p-multiselect-label {
+    padding: 0px !important;
+}
+.custom-button-addmember {
+    border-radius: 3px !important;
+    padding: 7px !important;
+}
+.custom-button-update {
+    border-radius: 3px !important;
+    padding: 7px !important;
+}
+.custom-button-delete {
+    border-radius: 3px !important;
+    padding: 7px !important;
+}
+.custom-button-accept {
+    border-radius: 3px !important;
+    padding: 7px !important;
+}
+.p-calendar input {
+    padding: 5px 10px !important;
+    height: 36px !important;
+    border-radius: 3px !important;
+}
+.p-calendar button {
+    padding: 5px 10px !important;
+    border-radius: 3px !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+.custom-input-h .p-dropdown-label {
+    padding: 0 !important;
+}
+
+.custom-button-close-footer {
+    padding: 5px 10px !important;
+    border: 1px solid #303030 !important;
+    color: #303030 !important;
+    border-radius: 3px !important;
+    height: 35px;
+}
+.custom-button-close-footer:hover {
+    background: #303030 !important;
+    color: #ffffff !important;
+    border-color: #303030 !important;
+}
+
+.navbar {
+    /* border-top: 1px solid black;
+    border-bottom: 1px solid black; */
+    border-top: 1px solid #dbdbdb !important;
+    border-bottom: 1px solid #dbdbdb !important;
+    padding: 0px;
+}
+
+.p-inputtext {
+    width: 100%;
+}
+.p-calendar {
+    width: 100%;
+}
+/* .p-dropdown {
+    width: 100%;
+} */
+.p-password {
+    width: 100%;
+}
+.mx-datepicker {
+    width: 100%;
+}
+
+.update-module > button {
+    background: red;
+    color: #ffffff;
+    background: #f59e0b;
+    border: 1px solid #f59e0b;
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+    overflow: unset;
+}

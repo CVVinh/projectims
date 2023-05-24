@@ -1,0 +1,47 @@
+variables:
+  IMAGE_TAG: latest
+  IMAGE_NAME_BACKEND: vhec.ims.backend
+  IMAGE_NAME_FRONTEND: vhec.ims.frontend
+  CONTAINER_NAME_BACKEND: vhec.ims.backend
+  CONTAINER_NAME_FRONTEND: vhec.ims.frontend
+
+stages:
+  - build 
+  # - migrate-db
+  - deploy
+
+build:
+  stage: build
+  before_script:
+    - docker login -u $REGISTRY_USER -p $REGISTRY_PASS $CI_REGISTRY
+  script:
+    - docker-compose build
+    - docker image tag $IMAGE_NAME_BACKEND:$IMAGE_TAG $CI_REGISTRY/$IMAGE_NAME_BACKEND:$IMAGE_TAG 
+    - docker image tag $IMAGE_NAME_FRONTEND:$IMAGE_TAG $CI_REGISTRY/$IMAGE_NAME_FRONTEND:$IMAGE_TAG 
+    - docker push $CI_REGISTRY/$IMAGE_NAME_BACKEND:$IMAGE_TAG
+    - docker push $CI_REGISTRY/$IMAGE_NAME_FRONTEND:$IMAGE_TAG
+    - docker image rm -f $IMAGE_NAME_BACKEND:$IMAGE_TAG $IMAGE_NAME_FRONTEND:$IMAGE_TAG
+  only:
+    - main
+
+# migrate-db:
+#   stage: migrate-db
+#   script:
+#     - cd BE/
+#     - docker build -t dotnet6-app -f Dockerfile_migratedb .
+#     - version=$(date +"%Y%m%d%H%M%S")
+#     - docker run --rm -v .:/app -w /app dotnet6-app dotnet ef migrations add $version
+#     - docker run --rm -v .:/app -w /app dotnet6-app dotnet ef database update $version  
+#   only:
+#     - develop
+
+deploy:
+  stage: deploy
+  before_script:
+    - docker login -u $REGISTRY_USER -p $REGISTRY_PASS $CI_REGISTRY
+    - chmod +x deploy.sh
+  script:
+    - ./deploy.sh
+    - docker logout $CI_REGISTRY
+  only:
+    - main
