@@ -114,8 +114,6 @@
                             'idProject',
                         ]"
                         responsiveLayout="scroll"
-                        :sortOrder="1"
-                        :sortField="'taskName'"
                     >
                         <template #empty> Không tìm thấy. </template>
                         <!-- Body -->
@@ -129,11 +127,6 @@
                                 {{ data.taskName }}
                             </template>
                         </Column>
-                        <!-- <Column header="Mô tả công việc" sortable style="min-width: 15rem">
-                            <template #body="{ data }">
-                                <p v-html="data.description"></p>
-                            </template>
-                        </Column> -->
                         <Column header="Trạng thái công việc" style="min-width: 8rem">
                             <template #body="{ data }">
                                 <div v-if="data.isOnGitLab" class="d-flex">
@@ -163,7 +156,7 @@
                         </Column>
                         <Column field="dateCreated" header="Ngày tạo" sortable dataType="date" style="min-width: 8rem">
                             <template #body="{ data }">
-                                {{ formatDateTime(data.dateCreated) }}
+                                {{ data.dateCreated }}
                             </template>
                         </Column>
                         <Column
@@ -200,7 +193,9 @@
                                         class="mt-1 me-2 p-button-warning custom-input-h"
                                         @click="showDialogUpdateTask(data)"
                                         icon="pi pi-pencil"
-                                        v-if="this.showButton.update && !checkCanOperation('sua', data) && !checkIsStaff()"
+                                        v-if="
+                                            this.showButton.update && !checkCanOperation('sua', data) && !checkIsStaff()
+                                        "
                                     />
                                     <Button
                                         @click="confirmDelete(data)"
@@ -256,12 +251,12 @@
             @closeUpdateStatusTask="closeUpdateStatusTask()"
             @ReloadDataGitLab="getTaskByProject()"
         />
-        <ExportBill
+        <!-- <ExportBill
             :isOpen="this.isOpenBill"
             :selectedProject="selectedProject"
             :projectData="this.project"
             @closeExportBill="closeExportBill()"
-        />
+        /> -->
     </LayoutDefaultDynamic>
 </template>
 
@@ -333,7 +328,7 @@
             }
         },
         async created() {
-            await this.Permisison() 
+            await this.Permisison()
             this.projectCode = this.$route.params.projectCode
             this.parentProjectCode = this.$route.params.parentProjectCode
             await this.renderStatus()
@@ -343,7 +338,7 @@
         watch: {
             selectedProject: {
                 handler: async function changeSelected(newValue) {
-                    if(newValue!=null || newValue!="") {
+                    if (newValue != null || newValue != '') {
                         this.selectedProject = newValue
                         this.project = null
                         await this.getProjectById(newValue)
@@ -404,18 +399,16 @@
                     } else {
                         return true
                     }
-                }
-                else if (name === 'sua') {
+                } else if (name === 'sua') {
+                    // (data.assignee != null && data.assignee.id === Number(checkAccessModule.getIdUserOnGitLab()))
                     if (
-                        (data.createUser != null && data.createUser.id === Number(checkAccessModule.getIdUserOnGitLab())) ||
-                        (data.assignee != null && data.assignee.id === Number(checkAccessModule.getIdUserOnGitLab()))
+                        (data.createUser != null && data.createUser.id === Number(checkAccessModule.getIdUserOnGitLab())) 
                     ) {
                         return false
                     } else {
                         return true
                     }
-                }
-                else if (name === 'xoa') {
+                } else if (name === 'xoa') {
                     if (
                         data.createUser.id === Number(checkAccessModule.getIdUserOnGitLab()) ||
                         checkAccessModule.isAdmin()
@@ -424,18 +417,12 @@
                     } else {
                         return true
                     }
-                }
-                else if (name === 'xoanhieu') {
-                }
-                else if (name === 'xuatfile') {
-                }
-                else if (name === 'xacnhan') {
-                }
-                else if (name === 'xacnhannhieu') {
-                }
-                else if (name === 'themthanhvien') {
-                }
-                else if (name === 'tuchoi') {
+                } else if (name === 'xoanhieu') {
+                } else if (name === 'xuatfile') {
+                } else if (name === 'xacnhan') {
+                } else if (name === 'xacnhannhieu') {
+                } else if (name === 'themthanhvien') {
+                } else if (name === 'tuchoi') {
                 }
             },
             closeUpdateStatusTask() {
@@ -446,7 +433,9 @@
                 this.isOpenUpdateStatusTask = true
             },
             async getAllLabelOnApiGitLab(page) {
-                return await ProjectService.getAllLabelsOfProject(this.parentProjectCode, 100, page).then((res) => res.data)
+                return await ProjectService.getAllLabelsOfProject(this.parentProjectCode, 100, page).then(
+                    (res) => res.data,
+                )
             },
             async getAllLabelOfProject() {
                 let resultCount = 100
@@ -490,13 +479,13 @@
                         if (checkAccessModule.isStaff()) {
                             await this.getProjectsByStaff()
                         }
-                    }  
+                    }
                     var result = []
-                    this.projects.map(ele => {
-                        if(ele.isOnGitlab===true) result.push(ele);
-                    });
-                    this.projects = [];
-                    this.projects = result;                 
+                    this.projects.map((ele) => {
+                        if (ele.isOnGitlab === true) result.push(ele)
+                    })
+                    this.projects = []
+                    this.projects = result
                 } else {
                     alert('Khong co quyen')
                     this.$router.push('/')
@@ -525,10 +514,10 @@
                 await Promise.all(
                     taskData.map(async (el) => {
                         //const lable = await this.renderColorLabel(...el.labels)
-                        var lable = this.filterLabeProject(el.labels);
+                        var lable = this.filterLabeProject(el.labels)
                         this.data.push({
                             assignee: el.assignee,
-                            dateCreated: el.created_at,
+                            dateCreated: this.formatDateTime(el.created_at),
                             description: el.description,
                             iid_issue: el.iid,
                             id: el.id,
@@ -582,7 +571,7 @@
                         var lable = this.filterLabeProject(el.labels);
                         this.data.push({
                             assignee: el.assignee,
-                            dateCreated: el.created_at,
+                            dateCreated: this.formatDateTime(el.created_at),
                             description: el.description,
                             iid_issue: el.iid,
                             id: el.id,
@@ -634,10 +623,10 @@
                 await Promise.all(
                     taskData.map(async (el) => {
                         //const lable = await this.renderColorLabel(...el.labels)
-                        var lable = this.filterLabeProject(el.labels);
+                        var lable = this.filterLabeProject(el.labels)
                         this.data.push({
                             assignee: el.assignee,
-                            dateCreated: el.created_at,
+                            dateCreated: this.formatDateTime(el.created_at),
                             description: el.description,
                             iid_issue: el.iid,
                             id: el.id,
@@ -667,22 +656,22 @@
                 return Promise.resolve(this.data)
             },
             async renderColorLabel(name) {
-                return await TaskService.getLabbelByName(this.parentProjectCode, name).then((res) => res.data);
+                return await TaskService.getLabbelByName(this.parentProjectCode, name).then((res) => res.data)
             },
             async renderStatus(code) {
                 const result = this.status.find((item) => item.code === code)
                 return result
             },
-            filterLabeProject(arrLabel){
+            filterLabeProject(arrLabel) {
                 var result = []
-                this.listLabel.map(ele => {
-                    arrLabel.map(item => {
-                        if(ele.name == item){
-                            result.push(ele);
+                this.listLabel.map((ele) => {
+                    arrLabel.map((item) => {
+                        if (ele.name == item) {
+                            result.push(ele)
                         }
                     })
                 })
-                return result;
+                return result
             },
             formatDateTime(date) {
                 var dateTime = new Date(date)
@@ -692,11 +681,18 @@
                 this.data = []
                 this.booleanProject = true
                 this.loading = true
-                const selectedProject = Object.assign({},this.projects.find((el) => el.id === this.selectedProject),)
+                const selectedProject = Object.assign(
+                    {},
+                    this.projects.find((el) => el.id === this.selectedProject),
+                )
                 if (checkAccessModule.getListGroup().includes('4')) {
                     if (selectedProject.isOnGitlab) {
                         this.gitlab = true
-                        await this.handlerFilterTaskByNameOnGitlabByUser(selectedProject.projectCode, checkAccessModule.getIdUserOnGitLab(), name)
+                        await this.handlerFilterTaskByNameOnGitlabByUser(
+                            selectedProject.projectCode,
+                            checkAccessModule.getIdUserOnGitLab(),
+                            name,
+                        )
                     } else {
                         this.gitlab = false
                         this.handlerFilterTaskOfStaff(selectedProject.id, checkAccessModule.getUserIdCurrent(), name)
@@ -736,10 +732,10 @@
                 this.itemIndex = itemIndexs
                 const newData = await Promise.all(
                     taskData.map(async (el) => {
-                        var lable = this.filterLabeProject(el.labels);
+                        var lable = this.filterLabeProject(el.labels)
                         return {
                             assignee: el.assignee,
-                            dateCreated: el.created_at,
+                            dateCreated: this.formatDateTime(el.created_at),
                             description: el.description,
                             iid_issue: el.iid,
                             id: el.id,
@@ -799,10 +795,10 @@
                 this.itemIndex = itemIndexs
                 const newData = await Promise.all(
                     taskData.map(async (el) => {
-                        var lable = this.filterLabeProject(el.labels);
+                        var lable = this.filterLabeProject(el.labels)
                         return {
                             assignee: el.assignee,
-                            dateCreated: el.created_at,
+                            dateCreated: this.formatDateTime(el.created_at),
                             description: el.description,
                             iid_issue: el.iid,
                             id: el.id,
@@ -847,7 +843,7 @@
                         var map = res.data._Data.map((el) => ({
                             assignee: el.assignee,
                             createUser: el.createUser,
-                            dateCreated: el.dateCreated,
+                            dateCreated: this.formatDateTime(el.dateCreated),
                             description: el.description,
                             duedate: el.duedate,
                             idProject: el.idProject,
@@ -868,7 +864,7 @@
                     .catch((error) => {
                         this.totalMapPage = 0
                         this.totalItem = 0
-                        console.log(error);
+                        console.log(error)
                     }).finally(() => { this.loading = false })
             },
             async handlerFilterTask_IMS(name, id) {
@@ -880,7 +876,7 @@
                         var map = res.data._Data.map((el) => ({
                             assignee: el.assignee,
                             createUser: el.createUser,
-                            dateCreated: el.dateCreated,
+                            dateCreated: this.formatDateTime(el.dateCreated),
                             description: el.description,
                             duedate: el.duedate,
                             idProject: el.idProject,
@@ -901,29 +897,32 @@
                     .catch((error) => {
                         this.totalMapPage = 0
                         this.totalItem = 0
-                        console.log(error);
+                        console.log(error)
                     }).finally(() => { this.loading = false })
             },
-            async filterDataByStaff(){
-                var result = this.data.map(ele => {
-                    return ele.assignee.id == checkAccessModule.getIdUserOnGitLab();
+            async filterDataByStaff() {
+                var result = this.data.map((ele) => {
+                    return ele.assignee.id == checkAccessModule.getIdUserOnGitLab()
                 })
-                this.data = result;
+                this.data = result
             },
             async getTaskByProject() {
-                this.data = [];
-                this.booleanProject = true;
-                this.loading = true;
-                const selectedProject = Object.assign({},this.projects.find((el) => el.id === this.selectedProject),)
-                if(Object.keys(selectedProject).length==0) {
-                    this.loading = false;
-                    return;
+                this.data = []
+                this.booleanProject = true
+                this.loading = true
+                const selectedProject = Object.assign(
+                    {},
+                    this.projects.find((el) => el.id === this.selectedProject),
+                )
+                if (Object.keys(selectedProject).length == 0) {
+                    this.loading = false
+                    return
                 }
                 if (checkAccessModule.isAdmin() || checkAccessModule.isOffice()) {
                     if (selectedProject.isOnGitlab) {
-                        await this.handlerGetAllTaskOnAPIGitLab(selectedProject.projectCode);
+                        await this.handlerGetAllTaskOnAPIGitLab(selectedProject.projectCode)
                     } else {
-                        await this.handlerGetAllTaskOnAPI_IMS(selectedProject.id);
+                        await this.handlerGetAllTaskOnAPI_IMS(selectedProject.id)
                     }
                 } else {
                     if (selectedProject.isOnGitlab) {
@@ -933,8 +932,12 @@
                         ) {
                             this.gitlab = true
                             await this.handlerGetAllTaskOnAPIGitLabByUserAuthor(selectedProject.projectCode)
-                        } else {
                             await this.handlerGetAllTaskOnAPIGitLabByUser(selectedProject.projectCode, checkAccessModule.getIdUserOnGitLab());
+                        } else {
+                            await this.handlerGetAllTaskOnAPIGitLabByUser(
+                                selectedProject.projectCode,
+                                checkAccessModule.getIdUserOnGitLab(),
+                            )
                         }
                     } else {
                         if (
@@ -944,7 +947,7 @@
                             await this.handlerGetAllTaskOnAPI_IMS(selectedProject.id)
                             this.gitlab = false
                         } else {
-                                await this.handlergetAllTaskOnAPI_IMSByIdStaff(
+                            await this.handlergetAllTaskOnAPI_IMSByIdStaff(
                                 selectedProject.id,
                                 checkAccessModule.getUserIdCurrent(),
                             )
@@ -969,7 +972,7 @@
                             const object = {
                                 assignee: el.assignee,
                                 createUser: el.createUser,
-                                dateCreated: el.dateCreated,
+                                dateCreated: this.formatDateTime(el.dateCreated),
                                 description: el.description,
                                 duedate: el.duedate,
                                 idProject: el.idProject,
@@ -992,7 +995,7 @@
                     .catch((error) => {
                         this.totalMapPage = 0
                         this.totalItem = 0
-                        console.log(error);
+                        console.log(error)
                         this.loading = false
                     }).finally(() => { this.loading = false })
             },
@@ -1006,7 +1009,7 @@
                             const object = {
                                 assignee: el.assignee,
                                 createUser: el.createUser,
-                                dateCreated: el.dateCreated,
+                                dateCreated: this.formatDateTime(el.dateCreated),
                                 description: el.description,
                                 duedate: el.duedate,
                                 idProject: el.idProject,
@@ -1029,7 +1032,7 @@
                     .catch((error) => {
                         this.totalMapPage = 0
                         this.totalItem = 0
-                        console.log(error);
+                        console.log(error)
                         this.loading = false
                     }).finally(() => { this.loading = false })
             },
@@ -1078,7 +1081,11 @@
                     })
             },
             async deleteTaskOnApiGitLab(task) {
-                await TaskService.deleteTaskOnGitLab(this.project.projectCode, task.iid_issue, checkAccessModule.getTokenUserOnGitLab())
+                await TaskService.deleteTaskOnGitLab(
+                    this.project.projectCode,
+                    task.iid_issue,
+                    checkAccessModule.getTokenUserOnGitLab(),
+                )
                     .then(async (res) => {
                         await this.getTaskByProject()
                         this.successMessage('Xóa thành công!')
@@ -1170,7 +1177,7 @@
             async handlerReload() {
                 if (this.booleanProject) {
                     this.loading = true
-                    this.filtersTaskName = ""
+                    this.filtersTaskName = ''
 
                     this.data = []
                     if (this.selectedProject != null) {

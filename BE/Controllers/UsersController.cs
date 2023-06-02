@@ -168,10 +168,8 @@ namespace BE.Controllers
                 {
                     var userIds = member._Data.Select(m => m.member);
 
-                    data = await _context.Users
-                        .Where(u => userIds.Contains(u.id))
-                        .ToListAsync();
-
+                    data = await _context.Users.Where(u => userIds.Contains(u.id)).ToListAsync();
+                    data = data.OrderBy(u => u.FullName).ToList();
                     var pageSize = (int)pageSizeEnum;
                     var resultPage = await _paginationServices.paginationListTableAsync(data, pageIndex, pageSize);
                     if (resultPage._success)
@@ -273,6 +271,21 @@ namespace BE.Controllers
                 return NotFound();
             }
             var users = await _context.Users.FindAsync(id);
+            var mapper = _mapper.Map<UserDto>(users);
+            if (users == null)
+            {
+                return NotFound();
+            }
+            return Ok(mapper);
+        }
+        [HttpGet("getUserByIdUserGitLab/{idUserGitLab}")]
+        public async Task<ActionResult<Users>> getUserByIdUserGitLab(int idUserGitLab)
+        {
+            if (_context.Users == null)
+            {
+                return NotFound();
+            }
+            var users = await _context.Users.Where(u => u.isDeleted == 0 && u.idUserGitLab == idUserGitLab).FirstOrDefaultAsync();
             var mapper = _mapper.Map<UserDto>(users);
             if (users == null)
             {
@@ -1042,9 +1055,7 @@ namespace BE.Controllers
                 {
                     var memberProject = await _context.Member_Projects.Where(mp => mp.idProject == idProject && mp.isDeleted == false).Select(s => s.member).ToListAsync();
 
-                    data = await _context.Users
-                        .Where(u => memberProject.Contains(u.id))
-                        .ToListAsync();
+                    data = await _context.Users.Where(u => memberProject.Contains(u.id)).ToListAsync();
                     data.Add(checkIdUser);
                     var userGroup = await _context.UserGroups.Where(u => u.idUser.Equals(idUser) && u.isDeleted==false).ToArrayAsync();
                     if (userGroup.Count() > 0)
@@ -1126,6 +1137,66 @@ namespace BE.Controllers
                 }
                 messgae = "Lấy tất cả user thành công";
                 return Ok(new BaseResponse<List<Users>>(success, messgae, data));
+            }
+            catch (Exception ex)
+            {
+                messgae = ex.Message;
+                return StatusCode(500, new BaseResponse<List<Users>>(success, messgae, data));
+            }
+        }
+
+        [HttpGet("getAllUsersByRoleInProjectByIdUserCurrent/{idUser}")]
+        public async Task<IActionResult> getAllUsersByRoleInProjectByIdUserCurrent(int idUser, int? pageIndex, PageSizeEnum pageSizeEnum)
+        {
+            var success = false;
+            var messgae = "";
+            var data = new List<Users>();
+            try
+            {
+                var checkUserExisted = await _context.Users.Where(u => u.isDeleted == 0 && u.id.Equals(idUser)).FirstOrDefaultAsync();
+                if (checkUserExisted != null)
+                {
+                    var getAllProject = await _context.Projects.Where(p => p.IsDeleted == false && (p.Leader.Equals(idUser) || p.UserCreated.Equals(idUser))).ToListAsync();
+                    foreach (var project in getAllProject)
+                    {
+                        var memberProject = await _context.Member_Projects.Where(mp => mp.idProject == project.Id && mp.isDeleted == false).Select(s => s.member).ToListAsync();
+
+                        var results = await _context.Users.Where(u => memberProject.Contains(u.id)).ToListAsync();
+                        var userGroup = await _context.UserGroups.Where(u => u.idUser.Equals(idUser) && u.isDeleted == false).ToArrayAsync();
+                        if (userGroup.Count() > 0)
+                        {
+                            var getUserPM = from us in _context.Users
+                                            join pj in _context.Projects on us.id equals pj.UserCreated
+                                            where pj.Id == project.Id
+                                            select us;
+                           var getIdUserPm = getUserPM.Select(u => u.id).OrderBy(u => u).ToList();
+                            foreach (var item in userGroup)
+                            {
+                                if (item.idGroup.Equals(3))
+                                {
+                                    results = results.Where(r => !getIdUserPm.Contains(r.id)).ToList();
+                                }
+                                if (item.idGroup.Equals(5))
+                                {
+                                    results.AddRange(getUserPM);
+                                }
+                            }
+                        }
+                        data.AddRange(results);
+                    }
+                }
+                var pageSize = (int)pageSizeEnum;
+                var resultPage = await _paginationServices.paginationListTableAsync(data.Distinct().OrderBy(x => x.userCode).ToList(), pageIndex, pageSize);
+                if (resultPage._success)
+                {
+                    return Ok(resultPage);
+                }
+                else
+                {
+                    success = false;
+                    messgae = resultPage._Message;
+                    return Ok(new BaseResponse<List<Users>>(success, messgae, data));
+                }
             }
             catch (Exception ex)
             {

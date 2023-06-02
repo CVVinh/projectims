@@ -1,6 +1,6 @@
 <template>
     <Dialog
-        header="Lý do không cho phép nghỉ ?"
+        header="Lý do không cho phép nghỉ?"
         :maximizable="true"
         :closable="false"
         position="center"
@@ -13,9 +13,8 @@
         <div class="container">
             <form class="form-addproject">
                 <div class="input-layout w-100">
-                    <label class="mb-2" for="name" :class="{ 'p-error': v$.leaveOff.reason.$invalid && submitted }">
-                        Lý do
-                        <span style="color: red">*</span>
+                    <label class="mb-2" for="name" :class="{ 'p-error': v$.leaveOff.reason.$invalid && isSubmit }">
+                        Lý do không duyệt<b style="color: red">*</b>
                     </label>
                     <Textarea
                         v-model="v$.leaveOff.reason.$model"
@@ -24,15 +23,10 @@
                         rows="5"
                     />
                     <small class="p-error" v-if="v$.leaveOff.reason.required.$invalid && isSubmit">
-                        {{ v$.leaveOff.reason.required.$message.replace('Value', 'Reason') }}
+                        <!-- {{ v$.leaveOff.reason.required.$message.replace('Value', 'Reason') }} -->
+                        Lý do không được bỏ trống!
                     </small>
                 </div>
-                <!-- <div class="group-button mt-3">
-                    <div>
-                        <Button label="Lưu" class="p-button-sm me-1" type="submit" icon="pi pi-check" />{{ ' ' }}
-                        <Button label="Hủy" class="p-button-sm p-button-secondary" @click="closeDialog()" />
-                    </div>
-                </div> -->
             </form>
         </div>
         <template #footer>
@@ -67,7 +61,6 @@
                     reason: null,
                 },
                 isSubmit: false,
-                submited: false,
             }
         },
         methods: {
@@ -87,10 +80,8 @@
                                     detail: res.data._Message,
                                     life: 3000,
                                 })
-                                this.submited = true
-                                this.$emit('reloadPage')
                                 this.closeDialog()
-                                this.resetForm()
+                                this.$emit('reloadPage')
                             }
                         })
                         .catch((err) => {
@@ -104,7 +95,7 @@
                 }
             },
             closeDialog() {
-                this.$emit('reloadPage')
+                this.resetForm()
                 this.$emit('closeDialog')
             },
             resetForm() {
@@ -123,10 +114,5 @@
         },
     }
 </script>
-<style scoped>
-    @media (max-width: 573px) {
-        .button-close {
-            font-size: 12px;
-        }
-    }
+<style scoped lang="scss">
 </style>

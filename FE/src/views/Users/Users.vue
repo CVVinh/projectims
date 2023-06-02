@@ -84,7 +84,6 @@
                                     v-model="selectedColumns"
                                     :options="columns"
                                     optionLabel="header"
-                                    @update:modelValue="onToggle"
                                     placeholder="Chọn"
                                     class="custom-input-h"
                                 />

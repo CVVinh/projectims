@@ -72,6 +72,22 @@ namespace BE.Controllers
             return Ok(result);
         }
 
+        [HttpPost("addMemberFromGitAsync")]
+        [Authorize(Roles = "module:memberProjects action:add")]
+        public async Task<IActionResult> AddMemberFromGitAsync(List<AddMemberDto> addMemberDtos)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var result = await _memberProjectServices.AddMemberFromGitAsync(addMemberDtos);
+            if (!result._success)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
+
         [HttpPut("deleteMemberById/{id}")]
         [Authorize(Roles = "module:memberProjects action:delete")]
         public async Task<IActionResult> deleteMemberById(int id)

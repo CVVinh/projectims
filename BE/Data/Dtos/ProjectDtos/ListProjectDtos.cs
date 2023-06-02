@@ -23,5 +23,6 @@
         public string? fullNameUserCreated { get; set; }
         public string? fullNameUserUpdate { get; set; }
         public string? fullNameUserId { get; set; }
+        public string? statusProject { get; set; }
     }
 }

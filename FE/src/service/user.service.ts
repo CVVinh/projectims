@@ -2,8 +2,8 @@ import { API_KEY_1, HTTP, HTTP_API_GITLAB } from '@/http-common'
 import { ApiApplication } from '../config/app.config'
 
 export class UserService {
-    public static getAllUser() {
-        return HTTP.get(ApiApplication.USER.GET_ALL)
+    public static getAllUser(pageIndex: Number, pageSize: Number) {
+        return HTTP.get(ApiApplication.USER.GET_ALL(pageIndex, pageSize))
     }
     public static getUserByCode(value) {
         return HTTP.get(ApiApplication.USER.GET_BY_CODE + value)
@@ -17,6 +17,9 @@ export class UserService {
     public static getUserById(id: number) {
         return HTTP.get(ApiApplication.USER.GET_USER_BY_ID(id))
     }
+    public static getUserByIdUserGitLab(id: number) {
+        return HTTP.get(ApiApplication.USER.GET_USER_BY_ID_USER_GITLAB(id))
+    }
     public static getAllUserByIdProject(id: number) {
         return HTTP.get(ApiApplication.USER.GET_ALL_USER_BY_IDPROJECT(id))
     }
@@ -28,5 +31,8 @@ export class UserService {
     }
     public static getAllInfoUserGitLab(pageIndex: Number, pageSize: Number) {
         return HTTP_API_GITLAB.get(ApiApplication.USER.GET_ALL_INFO_USER_GITLAB(pageIndex, pageSize, API_KEY_1))
+    }
+    public static getAllUserInProjectByIdUser(idUser: number, pageIndex: Number, pageSize: Number) {
+        return HTTP.get(ApiApplication.USER.GET_ALL_USER_IN_PROJECT_BY_IDUSER(idUser, pageIndex, pageSize))
     }
 }

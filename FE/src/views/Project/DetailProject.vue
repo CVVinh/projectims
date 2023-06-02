@@ -6,7 +6,7 @@
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb mb-2">
                             <li class="breadcrumb-item" @click="goToOverViews()">Tổng quan</li>
-                            <li class="breadcrumb-item active" aria-current="page">Dự án</li>
+                            <li class="breadcrumb-item active" aria-current="page">{{this.showProjectName}}</li>
                         </ol>
                     </nav>
                 </div>
@@ -72,11 +72,6 @@
                             </template>
                         </Column>
                         <Column field="fullName" header="Họ và tên" sortable style="min-width: 15rem"> </Column>
-                        <!-- <Column field="IdGroup" header="Nhóm" sortable style="min-width: 5rem">
-                            <template #body="{ data }">
-                                {{ data.idGroup }}
-                            </template>
-                        </Column> -->
                         <Column field="" header="Thực thi"  >
                             <template #body="{ data }">
                                 <Delete @click="openDeleteconfirm(data.id, this.$route.params.id)" class="custom-button-update" />
@@ -120,7 +115,7 @@
                 placeholder="Chọn thành viên"
                 :maxSelectedLabels="3"
                 class="w-full md:w-20rem"
-                v-if="this.projectData.isOnGitlab"
+                v-if="this.projectData.isOnGitlab && this.projectData.projectCode === this.projectData.subProjectCode"
             />
             <MultiSelect 
                 filter
@@ -187,6 +182,7 @@ export default {
             loading: true,
             itemIndex: 0,
             projectData: null,
+            showProjectName: "",
         }
     },
     watch: {
@@ -194,31 +190,48 @@ export default {
             handler: async function change() {
                 if (this.filterMemberName != '') {
                     await this.filterMemberByName(this.filterMemberName)
+                    await this.getAllUsersByRole(this.$route.params.id)
                 } else {
-                    await this.getData()
+                    await this.handlerGetData()
                 }
             },
             deep: true,
         },
         filterMemberName: {
             handler: async function Change(newVal) {
-                await this.filterMemberByName(newVal)
+                if (newVal != ''){
+                    await this.filterMemberByName(newVal)
+                    await this.getAllUsersByRole(this.$route.params.id)
+                } else {
+                    await this.handlerGetData()
+                }
             },
             deep: true,
         },
     },
     async mounted() {
-        await this.getData()
-        await this.getAllUsersByRole(this.$route.params.id)
+        await this.handlerGetData()
+        if(this.projectData!=null){
+            if(this.projectData.projectCode === this.projectData.subProjectCode){
+                this.showProjectName = "Thành viên dự án ["+this.projectData.name+"]"
+            }
+            else {
+                this.showProjectName = "Thành viên dự án ["+this.projectData.projectName+"]"
+            }
+        }
     },
     methods: {
         goToOverViews() {
             this.$router.push({ name: 'home'})
         },
+        async handlerGetData() {
+            await this.getData()
+            await this.getAllUsersByRole(this.$route.params.id)
+        },
         async filterMemberByName(name) {
             this.data = []
             this.loading = true
-            if(this.projectData.isOnGitlab) {
+            if(this.projectData.isOnGitlab && this.projectData.projectCode === this.projectData.subProjectCode) {
                 await TaskService.searchUserInProjectOnGitLab(
                     this.projectData.projectCode,
                     name,
@@ -229,11 +242,9 @@ export default {
                     let totalPages = 0;
                     let totalItems = 0;
                     let itemIndexs = 0;
-                    if (res.data.length > 0) {
-                        totalPages = parseInt(res.headers['x-total-pages']);
-                        totalItems = parseInt(res.headers['x-total']);
-                        itemIndexs = (this.resultPgae.pageNumber - 1) *  this.resultPgae.pageSize + 1;
-                    }
+                    totalPages = parseInt(res.headers['x-total-pages']);
+                    totalItems = parseInt(res.headers['x-total']);
+                    itemIndexs = (this.resultPgae.pageNumber - 1) *  this.resultPgae.pageSize + 1;
                     this.totalMapPage = totalPages;
                     this.totalItem = totalItems;
                     this.itemIndex = itemIndexs;
@@ -246,10 +257,10 @@ export default {
                     })
                     
                 })
-                .catch(async () => {
+                .catch(async (err) => {
                     this.totalMapPage = 0
                     this.totalItem = 0
-                    await this.getData()
+                    console.log(err);
                 })
                 .finally(() => {
                     this.loading = false
@@ -268,8 +279,10 @@ export default {
                     this.itemIndex = res.data._itemIndex
                     this.data = res.data._Data
                 })
-                .catch(async () => {
-                    await this.getData()
+                .catch(async (err) => {
+                    this.totalMapPage = 0
+                    this.totalItem = 0
+                    console.log(err);
                 })
                 .finally(() => {
                     this.loading = false
@@ -277,11 +290,9 @@ export default {
             }
         },
         async handlerReload() {
-            this.data = []
             this.selectedMember = []
             this.filterMemberName = ''
-            await this.getData()
-            await this.getAllUsersByRole(this.$route.params.id)
+            await this.handlerGetData()
         },
         openDeleteconfirm(iduser, idproject) {
             ;(this.display = true), (this.iduser = iduser), (this.idproject = idproject)
@@ -306,28 +317,25 @@ export default {
             }).finally(() => {
                 this.loading = false
             });
-            if(this.projectData.isOnGitlab){
+            if(this.projectData.isOnGitlab && this.projectData.projectCode === this.projectData.subProjectCode){
                 await TaskService.getAllMenberProject(this.projectData.projectCode, this.resultPgae.pageNumber,this.resultPgae.pageSize)
                 .then((res) => {
                     let totalPages = 0;
                     let totalItems = 0;
                     let itemIndexs = 0;
-                    if (res.data.length > 0) {
-                        totalPages = parseInt(res.headers['x-total-pages']);
-                        totalItems = parseInt(res.headers['x-total']);
-                        itemIndexs = (this.resultPgae.pageNumber - 1) *  this.resultPgae.pageSize + 1;
-                    }
+                    totalPages = parseInt(res.headers['x-total-pages']);
+                    totalItems = parseInt(res.headers['x-total']);
+                    itemIndexs = (this.resultPgae.pageNumber - 1) *  this.resultPgae.pageSize + 1;
                     this.totalMapPage = totalPages;
                     this.totalItem = totalItems;
                     this.itemIndex = itemIndexs;
-
+                    
                     res.data.forEach((el) => {
                         this.data.push({
                             id: el.id,
                             fullName: el.name,
                         })
                     })
-                    
                 })
                 .catch((err) => {
                     this.totalMapPage = 0
@@ -338,8 +346,7 @@ export default {
                 });
             }
             else {
-                await HTTP.get(
-                    `Users/getAllUsersByIdProject/${this.$route.params.id}?pageIndex=${this.resultPgae.pageNumber}&pageSizeEnum=${this.resultPgae.pageSize}`,
+                await HTTP.get(`Users/getAllUsersByIdProject/${this.$route.params.id}?pageIndex=${this.resultPgae.pageNumber}&pageSizeEnum=${this.resultPgae.pageSize}`,
                 ).then((res) => {
                     if (res.data._success) {
                         this.totalMapPage = res.data._totalPages
@@ -363,15 +370,41 @@ export default {
                     this.loading = false
                 });
             }
+            if(this.data.length <= 0) {
+                this.resultPgae.pageNumber = 1
+            }
         },
         async addMemberToProject() {
             this.closeBasic()
+            var checkShowInfo = false;
             try {
-                if(this.projectData.isOnGitlab){
+                if(this.projectData.isOnGitlab && this.projectData.projectCode === this.projectData.subProjectCode){
                     this.selectedMember.forEach(async ele => {
                         await TaskService.addMenberProject(this.projectData.projectCode, {
                             "user_id": ele,
                             "access_level": 30
+                        })
+                        .then((res) => {
+                            checkShowInfo = true
+                        })
+                        .catch(err => {
+                            checkShowInfo = false
+                            if(err.response.status==409){
+                                this.showInfo("Người này đã được thêm!")
+                            }
+                        })
+                        var findIdUser = this.data1.find(item => item.idUserGitLab === ele)
+                        await HTTP.post('memberProject/addMemberAtProject', {
+                            idProject: this.$route.params.id,
+                            member: findIdUser.id,
+                            createUser: checkAccessModule.getUserIdCurrent(),
+                        })
+                        .then(async res =>{ 
+                            await this.handlerReload()
+                            checkShowInfo = true
+                        })
+                        .catch(err => {
+                            console.log(err);
                         })
                     })
                 }
@@ -382,12 +415,20 @@ export default {
                             member: id,
                             createUser: checkAccessModule.getUserIdCurrent(),
                         })
+                        .then(async res =>{ 
+                            await this.handlerReload()
+                            checkShowInfo = true
+                        })
+                        .catch(err => {
+                            console.log(err);
+                        })
                     })
                 }
-                await this.handlerReload()
-                this.showSuccess('Thêm thành công')
+                if(checkShowInfo) this.showSuccess('Thêm thành công')
             }
             catch(err) {
+                this.totalMapPage = 0
+                this.totalItem = 0
                 console.log(err)
             }
         },
@@ -401,39 +442,40 @@ export default {
                 }
             }).catch((err)=> {console.log(err)})
 
-            if(this.projectData.isOnGitlab){
+            if(this.projectData.isOnGitlab && this.projectData.projectCode === this.projectData.subProjectCode){
                 var result = this.data1.filter(obj1 => !this.data.some(obj2 => obj2.id === obj1.idUserGitLab));
                 this.data1 = result
             }
         },
         async deleteMember(idMember, idProject) {
-            if(this.projectData.isOnGitlab){
-                await TaskService.deleteMenberProject(this.projectData.projectCode,idMember).then(res => {
+            if(this.projectData.isOnGitlab && this.projectData.projectCode === this.projectData.subProjectCode){
+                await TaskService.deleteMenberProject(this.projectData.projectCode,idMember).then(res => {}).catch((err)=> {console.log(err)})
+                var findIdUser = this.data1.find(ele => ele.idUserGitLab === idMember)
+                if(findIdUser === undefined) {
+                    var getUserApi = await UserService.getUserByIdUserGitLab(idMember)
+                    idMember = getUserApi.data.id
+                }
+            }
+            await HTTP.delete('memberProject/deleteMemberInProject/' + idMember + '/' + idProject).then(async (res) => {
+                if (res.data._success == true) {
+                } else {
+                    this.showError('Xóa lỗi!')
+                }
+            })
+            .catch((err)=> {console.log(err)})
 
-                }).catch((err)=> {console.log(err)})
-            }
-            else {
-                await HTTP.delete('memberProject/deleteMemberInProject/' + idMember + '/' + idProject).then(async (res) => {
-                    if (res.data._success == true) {
-                        
-                    } else {
-                        this.showError('Xóa lỗi!')
-                    }
-                })
-                .catch((err)=> {console.log(err)})
-            }
             this.closeDeleteconfirm()
             this.showSuccess('Xóa thành công!')
             await this.handlerReload()
         },
         showSuccess(mess) {
-            this.$toast.add({ severity: 'success', summary: 'Thành công', detail: mess, life: 3000 })
+            this.$toast.add({ severity: 'success', summary: 'Thành công!', detail: mess, life: 3000 })
         },
         showError(mess) {
-            this.$toast.add({ severity: 'error', summary: 'Lỗi', detail: mess, life: 3000 })
+            this.$toast.add({ severity: 'error', summary: 'Lỗi!', detail: mess, life: 3000 })
         },
-        mergeString(str1, str2) {
-            return str1 + ' ' + str2
+        showInfo(mess) {
+            this.$toast.add({ severity: 'info', summary: 'Thông báo!', detail: mess, life: 3000 })
         },
     },
     components: { Add, Delete, confirmDelete, ButtonCustom },

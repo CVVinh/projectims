@@ -71,7 +71,7 @@
                                 <Dropdown
                                     v-model="v$.data.idProject.$model"
                                     :options="project"
-                                    optionLabel="name"
+                                    optionLabel="projectName"
                                     optionValue="id"
                                     class =" custom-input-h"
                                     :class="{ 'p-invalid': v$.data.idProject.$invalid && submitted } "
@@ -104,6 +104,7 @@
                                     :options="userDropdown"
                                     optionLabel="name"
                                     optionValue="x.id"
+                                    placeholder="Chọn nhân viên"
                                     class =" custom-input-h"
                                     :class="{ 'p-invalid': v$.data.user.$invalid && submitted } "
                                     disabled
@@ -112,7 +113,7 @@
                             <small
                                 v-if="(v$.data.user.$invalid && submitted) || v$.data.user.$pending.$response"
                                 class="p-error"
-                                >Bạn chưa chọn người OT</small
+                                >Bạn chưa chọn người OT!</small
                             >
                         </div>
 
@@ -130,6 +131,7 @@
                                     :options="userDropdown"
                                     optionLabel="name"
                                     optionValue="x.id"
+                                    placeholder="Chọn nhân viên"
                                     class =" custom-input-h"
                                     :class="{ 'p-invalid': v$.data.user.$invalid && submitted } "
                                 />
@@ -137,7 +139,7 @@
                             <small
                                 v-if="(v$.data.user.$invalid && submitted) || v$.data.user.$pending.$response"
                                 class="p-error"
-                                >Bạn chưa chọn người OT</small
+                                >Bạn chưa chọn người OT!</small
                             >
                         </div>
                     </div>
@@ -310,7 +312,6 @@ import { required } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import LayoutDefault from '../../layouts/LayoutDefault/LayoutDefault.vue'
 import router from '@/router'
-import axios from 'axios'
 import { HTTP } from '@/http-common'
 import { DateHelper } from '@/helper/date.helper'
 import { LocalStorage } from '@/helper/local-storage.helper'
@@ -323,7 +324,6 @@ export default {
     props: ['display', 'idproject', 'AddOrEdit'],
     data() {
         return {
-            hello: true,
             data: {
                 type: 0,
                 date: '',
@@ -340,10 +340,8 @@ export default {
                 user: null,
                 idProject: null,
             },
-            token: null,
             userDropdown: [],
             project: [],
-            edit: false,
             submitted: false,
             time: null,
             valid: true,
@@ -358,8 +356,6 @@ export default {
                 { num: 2, text: 'Denied' },
                 { num: 3, text: 'Deleted' },
             ],
-            //axios: 'http://api.imsdemo.tk/api/',
-            axios: import.meta.env.VITE_VUE_API_URL,
         }
     },
     validations() {
@@ -458,10 +454,41 @@ export default {
             }
         },
     },
-    
+    async mounted() {
+        await this.getListProjectByGroup();
+        if (this.idproject !== null || this.idproject !== 0) {
+            await HTTP.get('OTs/getOTByID/' + this.idproject).then((res) => {
+                if (res.status == 200) {
+                    this.data = res.data
+                    this.data.date = moment(res.data.date).format('MM/DD/YYYY')
+                    this.data.date = new Date(new Date(this.data.date).toLocaleDateString('en-EU'))
+                }
+            })
+        } else {
+            this.data.start = '00:00'
+            this.data.end = '00:00'
+        }
+    },
+     watch: {
+        'data.idProject': async function (newId, oldId) {
+            if (newId !== null || oldId !== null) {
+                await this.getUserByProject(newId)
+                await this.getLeadProject(newId);
+            }
+        },
+    },
     methods: {
+        showSuccess(mess) {
+            this.$toast.add({severity: 'success',summary: 'Thành công',detail: mess,life: 2000,})
+        },
+        showWarn(err) {
+            this.$toast.add({ severity: 'warn', summary: 'Cảnh báo!', detail: err, life: 2000 })
+        },
+        checkday() {
+            this.valid = true
+            return true
+        },
         async getListProjectByGroup(){
-            
             if(checkAccessModule.isAdmin()){
                await this.getProject()
             }else{
@@ -472,6 +499,7 @@ export default {
                         await this.getListProjectByPm(checkAccessModule.getUserIdCurrent())
                     }
             }
+            console.log(this.project);
         },
         async getListProjectByLead(idLead){
             await HTTP.get('Project/GetProjectByIdLead/' + idLead).then((res) => {
@@ -508,14 +536,13 @@ export default {
                 });
             })
         },
-        handleSubmit(isFormValid) {
-            console.log('run');
+        async handleSubmit(isFormValid) {
             this.submitted = true
             if (!isFormValid) {
                 return
             }
             if (!this.valid || this.timeError || this.invalidTime1 || this.invalidTime2 || this.invalidTime3) return
-            this.addData()
+            await this.addData()
         },
         reloadform() {
             this.data = {
@@ -535,18 +562,17 @@ export default {
                 idProject: null,
             }
         },
-        getLeadProject(projectid){
-            console.log(projectid);
-            HTTP.get("Project/GetLeadByProject/" + projectid).then(rass=>{
+        async getLeadProject(projectid){
+            await HTTP.get("Project/GetLeadByProject/" + projectid).then(rass=>{
                 this.leader = rass.data
-            }).catch(err=>console.log(err))
+            }).catch(err => console.log(err))
         },
-        addData() {
-            console.log(this.data);
+        async addData() {
+            console.log(this.leader);
             this.data.date = moment(new Date(this.data.date)).format('YYYY-MM-DD')
             this.data.dateUpdate = new Date()
             if (this.idproject) {
-                HTTP.put('OTs/updateOT/' + this.idproject, this.data)
+                await HTTP.put('OTs/updateOT/' + this.idproject, this.data)
                     .then((res) => {
                         if (res.status == 200) {
                             this.showSuccess('Cập nhật OT thành công!')
@@ -557,7 +583,7 @@ export default {
                         }
                     })
                     .catch((err) => {
-                        this.showWarn('Bạn không có quyền thực hiện thao tác sửa OT.')
+                        this.showWarn('Bạn không có quyền thực hiện thao tác này!')
                         console.log(err)
                     })
             }
@@ -569,64 +595,38 @@ export default {
                         if (res.status == 200) {
                             this.showSuccess('Thêm mới OT thành công!')
                             this.$emit('reloadData')
-                            this.reloadform()
-                            this.$emit('close')
-                            this.submitted = false
+                            this.closeForm()
                         }
                     })
                     .catch(() => {
-                        this.showWarn('Bạn không có quyền thực hiện thao tác thêm OT')
+                        this.showWarn('Bạn không có quyền thực hiện thao tác này!')
                     })
             }
-        },       
-        check_status(status) {
-            if (status == 2) return true
-            return false
-        },
-        backToOT() {
-            this.$router.push('/ots')
-        },
-        showSuccess(mess) {
-            this.$toast.add({
-                severity: 'success',
-                summary: 'Thành công',
-                detail: mess,
-                life: 3000,
-            })
-        },
-        showWarn(err) {
-            this.$toast.add({ severity: 'warn', summary: 'Tin nhắn cảnh báo', detail: err, life: 3000 })
-        },
-        checkday() {
-            this.valid = true
-            return true
-        },
-        getUserByProject(projectid) {
+        },              
+        async getUserByProject(projectid) {
             this.userDropdown = []
             if (projectid !== null) {
-                HTTP.get('Project/UserInProject/' + projectid)
-                    .then((res) => {
-                        
-                        HTTP.get("Project/GetLeadByProject/" + projectid).then(rass=>{
+                await HTTP.get('Project/UserInProject/' + projectid)
+                    .then(async (res) => {
+                        await HTTP.get("Project/GetLeadByProject/" + projectid).then(rass=>{
                             const object = {
                                 x : rass.data.x,
                                 name : rass.data.fullName
                             }      
                             res.data.push(object)    
-                        }).catch(err=>console.log(err))
+                        }).catch(err => console.log(err))
                         this.userDropdown = res.data      
                     })
                 .catch((err) => console.log(err))
             }
         },
-        async closeForm() {
-            this.reloadform()
+        closeForm() {
             this.$emit('close')
+            this.reloadform()
         },
-        getData() {
+        async getData() {
             if (this.idproject !== null) {
-                this.edit = true
-                HTTP.get('OTs/getOTByID/' + this.idproject).then((res) => {
+                await HTTP.get('OTs/getOTByID/' + this.idproject).then((res) => {
                     if (res.status == 200) {
                         this.data = res.data
                         this.data.date = moment(res.data.date).format('MM/DD/YYYY')
@@ -649,43 +649,10 @@ export default {
                 })
             })
         },
-       
     },
-
-    async mounted() {
-        await this.getListProjectByGroup();
-        this.submitted = false
-        // Kiểm tra cái này phải là edit hay không
-        if (this.idproject !== null || this.idproject !== 0) {
-            this.edit = true
-            HTTP.get('OTs/getOTByID/' + this.idproject).then((res) => {
-                if (res.status == 200) {
-                    this.data = res.data
-                    this.data.date = moment(res.data.date).format('MM/DD/YYYY')
-                    this.data.date = new Date(new Date(this.data.date).toLocaleDateString('en-EU'))
-                }
-            })
-        } else {
-            this.data.start = '00:00'
-            this.data.end = '00:00'
-        }
-    },
-
-
-    watch: {
-        // GET User By ID Project when change Id Data.IDProject
-        'data.idProject': function (newId, oldId) {
-            if (newId !== null || oldId !== null) {
-                this.getUserByProject(newId)
-                this.getLeadProject(newId);
-            }
-        },
-    },
-
     components: { ButtonCustom },
 }
 </script>
-
 <style lang="scss" scoped>
 
 </style>

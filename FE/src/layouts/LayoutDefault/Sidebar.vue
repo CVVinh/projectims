@@ -39,11 +39,47 @@
                                 :class="{ 'active-nav-item': activeTag === 'tag1' }"
                             >
                                 <!-- <i class="bx bx-notepad"></i> -->
-                                <span :class="{ 'label-disble': isCollapse == true }" class="padding-left-chill">Dự án</span>
+                                <span :class="{ 'label-disble': isCollapse == true }" class="padding-left-chill"
+                                    >Dự án</span
+                                >
                             </router-link>
                         </li>
-                        <li class="list-group-item-action"
-                           v-if="(checkcanOperation('add','users') && checkcanOperation('delete','users') && checkcanOperation('update','users')) || checkIsGroup('office')"
+                        <li class="list-group-item-action mt-1 drop-botton-css" v-if="checkshow('project')">
+                            <router-link
+                                :to="{ name: 'ExportBill', params: {} }"
+                                class="py-2 ripple list-group-item-action"
+                                aria-current="true"
+                                @click="activeTag = 'tag29'"
+                                :class="{ 'active-nav-item': activeTag === 'tag29' }"
+                            >
+                                <!-- <i class="bx bx-notepad"></i> -->
+                                <span :class="{ 'label-disble': isCollapse == true }" class="padding-left-chill"
+                                    >Xuất Bill</span
+                                >
+                            </router-link>
+                        </li>
+                        <li class="list-group-item-action mt-1 drop-botton-css" v-if="checkshow('workPerformances')">
+                            <router-link
+                                :to="{ name: 'workPerformances', params: {} }"
+                                class="py-2 ripple list-group-item-action"
+                                aria-current="true"
+                                @click="activeTag = 'tag30'"
+                                :class="{ 'active-nav-item': activeTag === 'tag30' }"
+                            >
+                                <!-- <i class="bx bx-notepad"></i> -->
+                                <span :class="{ 'label-disble': isCollapse == true }" class="padding-left-chill"
+                                    >Hiệu suất</span
+                                >
+                            </router-link>
+                        </li>
+                        <li
+                            class="list-group-item-action"
+                            v-if="
+                                (checkcanOperation('add', 'users') &&
+                                    checkcanOperation('delete', 'users') &&
+                                    checkcanOperation('update', 'users')) ||
+                                checkIsGroup('office')
+                            "
                         >
                             <router-link
                                 :to="{ name: 'users', params: {} }"
@@ -99,10 +135,7 @@
                         :class="{ 'active-boder-left': isActiveLeaveOff }"
                         v-if="checkshow('leaveoffs')"
                     >
-                        <li
-                            class="list-group-item-action drop-botton-css"
-                            v-if="checkcanOperation('add','leaveOffs')"
-                        >
+                        <li class="list-group-item-action drop-botton-css" v-if="checkcanOperation('add', 'leaveOffs')">
                             <router-link
                                 :to="{ name: 'LeaveOffRegisterlists', params: {} }"
                                 class="py-2 ripple list-group-item-action"
@@ -113,8 +146,9 @@
                                 <span class="padding-left-chill">Đăng ký</span>
                             </router-link>
                         </li>
-                        <li class="list-group-item-action drop-botton-css"
-                           v-if="checkcanOperation('confirm','leaveOffs')"
+                        <li
+                            class="list-group-item-action drop-botton-css"
+                            v-if="checkcanOperation('confirm', 'leaveOffs')"
                         >
                             <router-link
                                 :to="{ name: 'Acceptregisterlists', params: {} }"
@@ -126,9 +160,7 @@
                                 <span class="padding-left-chill">Duyệt</span>
                             </router-link>
                         </li>
-                        <li class="list-group-item-action"
-                           v-if="checkcanOperation('export','leaveOffs')"
-                        >
+                        <li class="list-group-item-action" v-if="checkcanOperation('export', 'leaveOffs')">
                             <router-link
                                 :to="{ name: 'Leaveoff', params: {} }"
                                 class="py-2 ripple list-group-item-action"
@@ -236,7 +268,7 @@
                 >
                     <i class="bx bxs-notepad"></i>
                     <span :class="{ 'label-disble': isCollapse == true }">Quy định</span>
-                </router-link>
+                </router-link>               
                 <router-link
                     :to="{ name: 'blog', params: {} }"
                     class="py-2 ripple list-group-item-action padding-left-custom"
@@ -258,9 +290,9 @@
                     <i class="bx bxl-blogger"></i>
                     <span :class="{ 'label-disble': isCollapse == true }">Quản lý blog</span>
                 </router-link>
-    
+
                 <!-- TimeSheet -->
-               <!--  <router-link
+                <!--  <router-link
                     :to="{ name: 'timeSheetDailys', params: {} }"
                     class="py-2 ripple list-group-item-action padding-left-custom"
                     @click="activeTag = 'tag31'"
@@ -305,9 +337,7 @@
                             </router-link>
                         </li>
 
-                        <li
-                            class="list-group-item-action drop-botton-css"
-                        >
+                        <li class="list-group-item-action drop-botton-css">
                             <router-link
                                 :to="{ name: 'bloglist', params: {} }"
                                 class="py-2 ripple list-group-item-action padding-left-custom"
@@ -376,8 +406,6 @@
                     </ul>
                 </div> -->
                 <!--  /Báo cáo-->
-
-                
 
                 <!-- Thiết lập -->
                 <div
@@ -522,382 +550,380 @@
 </template>
 
 <script>
-import { HTTP, GET_GROUP_BY_ID } from '@/http-common'
-import { Module } from '@/views/Menus'
-import jwt_decode from 'jwt-decode'
-import { LocalStorage } from '@/helper/local-storage.helper'
-import { UserRoleHelper } from '@/helper/user-role.helper'
-import { checkAccessModule } from '@/helper/checkAccessModule'
-import sideBar from '@/layouts/LayoutDefault/Sidebar.vue'
-export default {
-    name: 'home',
-    data() {
-        return {
-            moduleCurrent: '',
-            menus: ['this is item default'],
-            modules: [],
-            idModule: '',
-            submenu: [],
-            isLoading: true,
-            module: [],
-            isActive1: false,
-            isActive2: false,
-            isActive3: false,
-            isActive4: false,
-            isActiveLeaveOff: false,
-            dataGrounp: [],
-            path: null,
-            token: null,
-            activeTag: null,
-            dopdowntag: null,
-            showLink: {
-                leaveoffAdminPm: false,
-                leaveoffAdminSample: false,
-                leaveoffStaff: false,
-                leaveoffSample: false,
-                leaveoffAdminPmLead: false,
-                leaveoffAdminPmLeadSample: false,
-                leaveoffPmLead: false,
-                leaveoffPM: false,
+    import { HTTP, GET_GROUP_BY_ID } from '@/http-common'
+    import { Module } from '@/views/Menus'
+    import jwt_decode from 'jwt-decode'
+    import { LocalStorage } from '@/helper/local-storage.helper'
+    import { UserRoleHelper } from '@/helper/user-role.helper'
+    import { checkAccessModule } from '@/helper/checkAccessModule'
+    import sideBar from '@/layouts/LayoutDefault/Sidebar.vue'
+    export default {
+        name: 'home',
+        data() {
+            return {
+                moduleCurrent: '',
+                menus: ['this is item default'],
+                modules: [],
+                idModule: '',
+                submenu: [],
+                isLoading: true,
+                module: [],
+                isActive1: false,
+                isActive2: false,
+                isActive3: false,
+                isActive4: false,
+                isActiveLeaveOff: false,
+                dataGrounp: [],
+                path: null,
+                token: null,
+                activeTag: null,
+                dopdowntag: null,
+                showLink: {
+                    leaveoffAdminPm: false,
+                    leaveoffAdminSample: false,
+                    leaveoffStaff: false,
+                    leaveoffSample: false,
+                    leaveoffAdminPmLead: false,
+                    leaveoffAdminPmLeadSample: false,
+                    leaveoffPmLead: false,
+                    leaveoffPM: false,
+                },
+                isCollapse: false,
+                showSidebar: [],
+            }
+        },
+        async created() {
+            this.token = LocalStorage.jwtDecodeToken()
+            this.activeTag = localStorage.getItem('activeTag')
+            checkAccessModule.checksidebar(this.showSidebar)
+        },
+        watch: {
+            activeTag(newValue) {
+                localStorage.setItem('activeTag', newValue)
             },
-            isCollapse: false,
-            showSidebar: [],
-        }
-    },
-    async created() {
-        this.token = LocalStorage.jwtDecodeToken()
-        this.activeTag = localStorage.getItem('activeTag')
-        await checkAccessModule.checksidebar(this.showSidebar)
-    },
-
-    watch: {
-        activeTag(newValue) {
-            localStorage.setItem('activeTag', newValue)
         },
-    },
-    methods: {
-        checkIsGroup(nameGroup) {
-            var name = nameGroup.toLowerCase()
-            if (name === 'admin') {
-                if (checkAccessModule.isAdmin()) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-
-            if (name === 'lead') {
-                if (checkAccessModule.isLead()) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-
-            if (name === 'pm') {
-                if (checkAccessModule.isPm()) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-
-            if (name === 'office') {
-                if (checkAccessModule.isOffice()) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-
-            if (name === 'staff') {
-                if (checkAccessModule.isStaff()) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-        },
-        checkcanOperation(operation,nameModule){
-            if(checkAccessModule.checkOperationSidebar(operation,nameModule)){
-                return true
-            }else{
-                return false
-            }
-        },
-        checkshow(nameModule) {
-            const name = nameModule.toLowerCase()
-            if (this.showSidebar[name] === true) {
-                return true
-            } else {
-                return false
-            }       
-        },
-        onActive(dropdownNumber) {
-            if (dropdownNumber === 1) {
-                this.isActive1 = !this.isActive1
-            } else if (dropdownNumber === 2) {
-                this.isActive2 = !this.isActive2
-            } else if (dropdownNumber === 3) {
-                this.isActive3 = !this.isActive3
-            } else if (dropdownNumber === 4) {
-                this.isActiveLeaveOff = !this.isActiveLeaveOff
-            } else if (dropdownNumber === 5) {
-                this.checkStaff()
-                this.isActive4 = !this.isActive4
-            }
-        },
-        async getRole() {
-            HTTP.get(GET_GROUP_BY_ID(Number(this.token.listGroup[0]))).then((res) => {
-                this.dataGrounp = res.data
-            })
-        },
-        getListMenuByIdModule(id) {
-            HTTP.get(`Menu/getMenuByModule?moduleId=${id}`).then((res) => {
-                if (res.status == 200) {
-                    this.menus = res.data
-                    const temp = []
-                    this.menus.forEach((menu) => {
-                        if (menu.parent != 0 && menu.isDeleted != 1) {
-                            temp.push(menu)
-                        }
-                    })
-                    this.menus = temp
-                }
-            })
-        },
-        getListModule() {
-            HTTP.get('Modules/getListModule').then((res) => {
-                if (res.status == 200) {
-                    this.modules = res.data
-
-                    this.modules.forEach((module) => {
-                        if (module.nameModule == this.moduleCurrent && module.isDeleted == 0) {
-                            this.module.push(module)
-                        }
-                    })
-                    if (this.module.length > 0) {
-                        this.getListMenuByIdModule(this.module[0].id)
+        methods: {
+            checkIsGroup(nameGroup) {
+                var name = nameGroup.toLowerCase()
+                if (name === 'admin') {
+                    if (checkAccessModule.isAdmin()) {
+                        return true
                     } else {
-                        this.menus = []
+                        return false
                     }
-                    this.isLoading = false
                 }
-            })
+
+                if (name === 'lead') {
+                    if (checkAccessModule.isLead()) {
+                        return true
+                    } else {
+                        return false
+                    }
+                }
+
+                if (name === 'pm') {
+                    if (checkAccessModule.isPm()) {
+                        return true
+                    } else {
+                        return false
+                    }
+                }
+
+                if (name === 'office') {
+                    if (checkAccessModule.isOffice()) {
+                        return true
+                    } else {
+                        return false
+                    }
+                }
+
+                if (name === 'staff') {
+                    if (checkAccessModule.isStaff()) {
+                        return true
+                    } else {
+                        return false
+                    }
+                }
+            },
+            checkcanOperation(operation, nameModule) {
+                if (checkAccessModule.checkOperationSidebar(operation, nameModule)) {
+                    return true
+                } else {
+                    return false
+                }
+            },
+            checkshow(nameModule) {
+                const name = nameModule.toLowerCase()
+                if (this.showSidebar[name] === true) {
+                    return true
+                } else {
+                    return false
+                }
+            },
+            onActive(dropdownNumber) {
+                if (dropdownNumber === 1) {
+                    this.isActive1 = !this.isActive1
+                } else if (dropdownNumber === 2) {
+                    this.isActive2 = !this.isActive2
+                } else if (dropdownNumber === 3) {
+                    this.isActive3 = !this.isActive3
+                } else if (dropdownNumber === 4) {
+                    this.isActiveLeaveOff = !this.isActiveLeaveOff
+                } else if (dropdownNumber === 5) {
+                    this.checkStaff()
+                    this.isActive4 = !this.isActive4
+                }
+            },
+            /* async getRole() {
+                HTTP.get(GET_GROUP_BY_ID(Number(this.token.listGroup[0]))).then((res) => {
+                    this.dataGrounp = res.data
+                })
+            },
+            getListMenuByIdModule(id) {
+                HTTP.get(`Menu/getMenuByModule?moduleId=${id}`).then((res) => {
+                    if (res.status == 200) {
+                        this.menus = res.data
+                        const temp = []
+                        this.menus.forEach((menu) => {
+                            if (menu.parent != 0 && menu.isDeleted != 1) {
+                                temp.push(menu)
+                            }
+                        })
+                        this.menus = temp
+                    }
+                })
+            },
+            getListModule() {
+                HTTP.get('Modules/getListModule').then((res) => {
+                    if (res.status == 200) {
+                        this.modules = res.data
+
+                        this.modules.forEach((module) => {
+                            if (module.nameModule == this.moduleCurrent && module.isDeleted == 0) {
+                                this.module.push(module)
+                            }
+                        })
+                        if (this.module.length > 0) {
+                            this.getListMenuByIdModule(this.module[0].id)
+                        } else {
+                            this.menus = []
+                        }
+                        this.isLoading = false
+                    }
+                })
+            }, */
+
+            handlerCollapse() {
+                this.isCollapse = !this.isCollapse
+            },
         },
- 
-        
-        handlerCollapse() {
-            this.isCollapse = !this.isCollapse
-        },
-    },
-}
+    }
 </script>
 <style scoped>
-* {
-    scrollbar-width: thin;
-    scrollbar-color: #c0bfbf #ffffff;
-}
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: #c0bfbf #ffffff;
+    }
 
-*::-webkit-scrollbar {
-    width: 9px;
-}
+    *::-webkit-scrollbar {
+        width: 9px;
+    }
 
-*::-webkit-scrollbar-track {
-    background: #ffffff;
-}
+    *::-webkit-scrollbar-track {
+        background: #ffffff;
+    }
 
-*::-webkit-scrollbar-thumb {
-    background-color: #c0bfbf;
-    border-radius: 10px;
-    border: 3px solid #ffffff;
-}
-.collapse-width-map {
-    width: 60px;
-    transform: translateX(200px);
-    left: -200px;
-    transition: 0.5s ease;
-}
-.copllapse-home {
-    margin-left: 64px;
-    transition: 0.5s ease;
-}
-.padding-left-custom {
-    padding-left: 10px;
-}
-.active-boder-left {
-    border-left: 3px solid #3b82f6;
-}
-.padding-left-chill {
-    padding-left: 24px;
-}
+    *::-webkit-scrollbar-thumb {
+        background-color: #c0bfbf;
+        border-radius: 10px;
+        border: 3px solid #ffffff;
+    }
+    .collapse-width-map {
+        width: 60px;
+        transform: translateX(200px);
+        left: -200px;
+        transition: 0.5s ease;
+    }
+    .copllapse-home {
+        margin-left: 64px;
+        transition: 0.5s ease;
+    }
+    .padding-left-custom {
+        padding-left: 10px;
+    }
+    .active-boder-left {
+        border-left: 3px solid #3b82f6;
+    }
+    .padding-left-chill {
+        padding-left: 24px;
+    }
 </style>
 <style>
-.active-nav-item {
-    color: #0d6efd !important;
-    text-decoration: none;
-    background: #e7e7e7;
-    font-weight: 500;
-}
-.active-nav-item i {
-    font-weight: 600;
-}
-a i {
-    font-size: 21px;
-}
-.sidebar_after::after {
-    content: '\f0d7';
-    font-family: FontAwesome;
-    font-style: normal;
-    font-weight: normal;
-    text-decoration: inherit;
-    justify-content: end;
-    width: 20%;
-    display: flex;
-    color: rgb(149 147 147);
-    margin-right: 13px;
-}
-.afterCollapse::after {
-    content: '';
-}
-.m-t--4 {
-    margin-top: 0.5rem !important;
-}
-.home {
-    margin-top: 57px;
-    margin-left: 220px;
-    transition: 0.5s ease;
-}
+    .active-nav-item {
+        color: #0d6efd !important;
+        text-decoration: none;
+        background: #e7e7e7;
+        font-weight: 500;
+    }
+    .active-nav-item i {
+        font-weight: 600;
+    }
+    a i {
+        font-size: 21px;
+    }
+    .sidebar_after::after {
+        content: '\f0d7';
+        font-family: FontAwesome;
+        font-style: normal;
+        font-weight: normal;
+        text-decoration: inherit;
+        justify-content: end;
+        width: 20%;
+        display: flex;
+        color: rgb(149 147 147);
+        margin-right: 13px;
+    }
+    .afterCollapse::after {
+        content: '';
+    }
+    .m-t--4 {
+        margin-top: 0.5rem !important;
+    }
+    .home {
+        margin-top: 57px;
+        margin-left: 220px;
+        transition: 0.5s ease;
+    }
 
-/* Sidebar */
-.sidebar {
-    position: fixed;
-    top: -15px;
-    bottom: 0;
-    left: 0;
-    padding: 58px 0 0;
-    border-radius: 2px;
-    box-shadow: 0 0 3px 0 #a7a4a4, 0 2px 3px 0 #d1cfcf;
-    z-index: 99;
-    width: 220px;
-    background-color: #fafafa;
-    font-size: 14px;
-}
+    /* Sidebar */
+    .sidebar {
+        position: fixed;
+        top: -15px;
+        bottom: 0;
+        left: 0;
+        padding: 58px 0 0;
+        border-radius: 2px;
+        box-shadow: 0 0 3px 0 #a7a4a4, 0 2px 3px 0 #d1cfcf;
+        z-index: 99;
+        width: 220px;
+        background-color: #fafafa;
+        font-size: 14px;
+    }
 
-/* @media (max-width: 991.98px) {
+    /* @media (max-width: 991.98px) {
         .sidebar {
             width: 100%;
         }
     } */
 
-.sidebar .active {
-    border-radius: 5px;
-    box-shadow: 0 2px 5px 0 rgb(0 0 0 / 16%), 0 2px 10px 0 rgb(0 0 0 / 12%);
-}
+    .sidebar .active {
+        border-radius: 5px;
+        box-shadow: 0 2px 5px 0 rgb(0 0 0 / 16%), 0 2px 10px 0 rgb(0 0 0 / 12%);
+    }
 
-.sidebar-sticky {
-    position: relative;
-    top: 0;
-    height: calc(100vh - 48px);
-    padding-top: 0.5rem;
-    overflow-x: hidden;
-    overflow-y: auto;
-    /* Scrollable contents if viewport is shorter than content. */
-}
+    .sidebar-sticky {
+        position: relative;
+        top: 0;
+        height: calc(100vh - 48px);
+        padding-top: 0.5rem;
+        overflow-x: hidden;
+        overflow-y: auto;
+        /* Scrollable contents if viewport is shorter than content. */
+    }
 
-.py-2 {
-    text-decoration: none;
-    color: black;
-}
+    .py-2 {
+        text-decoration: none;
+        color: black;
+    }
 
-.py-2 i {
-    margin-right: 5px;
-    margin-left: 5px;
-}
+    .py-2 i {
+        margin-right: 5px;
+        margin-left: 5px;
+    }
 
-.dropdown-item {
-    padding: 0.25rem 0.5rem !important;
-}
+    .dropdown-item {
+        padding: 0.25rem 0.5rem !important;
+    }
 
-.dropdownList li a span {
-    margin-left: 15px;
-}
+    .dropdownList li a span {
+        margin-left: 15px;
+    }
 
-.dropdownList li a i {
-    margin-left: 15px;
-}
+    .dropdownList li a i {
+        margin-left: 15px;
+    }
 
-.dropdownList li {
-    margin-bottom: 7px;
-    height: 25px;
-    display: flex;
-    align-items: center;
-}
-.sidebar-top-level-items {
-    background: rgba(0, 0, 0, 0.04);
-    font-weight: 500;
-    color: #3b82f6;
-}
+    .dropdownList li {
+        margin-bottom: 7px;
+        height: 25px;
+        display: flex;
+        align-items: center;
+    }
+    .sidebar-top-level-items {
+        background: rgba(0, 0, 0, 0.04);
+        font-weight: 500;
+        color: #3b82f6;
+    }
 
-.dropdown-item.active,
-.dropdown-item:active {
-    color: #0d6efd;
-    text-decoration: none;
-    background: rgba(0, 0, 0, 0.04);
-}
-.drop-botton-css {
-    margin-bottom: 17px !important;
-}
-.sidebar {
-    height: 96%;
-    overflow-y: scroll;
-    transition: 0.5s ease;
-}
-/* .sidebar:hover {
+    .dropdown-item.active,
+    .dropdown-item:active {
+        color: #0d6efd;
+        text-decoration: none;
+        background: rgba(0, 0, 0, 0.04);
+    }
+    .drop-botton-css {
+        margin-bottom: 17px !important;
+    }
+    .sidebar {
+        height: 96%;
+        overflow-y: scroll;
+        transition: 0.5s ease;
+    }
+    /* .sidebar:hover {
         width: 258px;
     } */
-.label-disble {
-    display: none;
-    transition: 0.5s ease;
-}
-.sidebar-1 {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    border-radius: 2px;
-    z-index: 99;
-    width: 220px;
-    height: 5%;
-    margin-bottom: 2px;
-    cursor: pointer;
-    transition: 0.5s ease;
-    box-shadow: 0 0 3px 0 #a7a4a4, 0 2px 3px 0 #d1cfcf;
-    background-color: #fafafa;
-}
-.sidebar-1 h5 {
-    margin-bottom: 0;
-    font-size: 14px;
-    font-weight: 400;
-}
-.sidebar-1 h5 span i {
-    font-size: 21px;
-}
-.sidebar-1:hover {
-    background-color: rgb(216, 216, 216);
-}
-
-@media (max-width: 573px) {
-    .sidebar {
-        width: 20%;
-        display: none !important;
+    .label-disble {
+        display: none;
+        transition: 0.5s ease;
     }
-    .home {
-        margin-left: 0px;
-    }
-}
-@media (max-width: 573px) {
     .sidebar-1 {
-        display: none !important;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        border-radius: 2px;
+        z-index: 99;
+        width: 220px;
+        height: 5%;
+        margin-bottom: 2px;
+        cursor: pointer;
+        transition: 0.5s ease;
+        box-shadow: 0 0 3px 0 #a7a4a4, 0 2px 3px 0 #d1cfcf;
+        background-color: #fafafa;
     }
-}
+    .sidebar-1 h5 {
+        margin-bottom: 0;
+        font-size: 14px;
+        font-weight: 400;
+    }
+    .sidebar-1 h5 span i {
+        font-size: 21px;
+    }
+    .sidebar-1:hover {
+        background-color: rgb(216, 216, 216);
+    }
+
+    @media (max-width: 573px) {
+        .sidebar {
+            width: 20%;
+            display: none !important;
+        }
+        .home {
+            margin-left: 0px;
+        }
+    }
+    @media (max-width: 573px) {
+        .sidebar-1 {
+            display: none !important;
+        }
+    }
 </style>

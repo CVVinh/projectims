@@ -4,7 +4,7 @@
             <div class="col-md-4 d-flex align-items-center justify-content-start" id="page-nav">
                 <div>
                     <div class="pagination pagination1 pagination3 pagination4 pagination6">
-                        <a @click="ChangePage('Prev')">&laquo;</a>
+                        <a @click="ChangePage('Prev')" :class="this.pageNumber <= 1 ? 'disabled': ''" >&laquo;</a>
                         <a
                             :class="{ active: item == pageNumber }"
                             v-for="(item, index) in page"
@@ -12,7 +12,7 @@
                             @click="ChangePage(item)"
                             >{{ item }}</a
                         >
-                        <a class="page-link" @click="ChangePage('Next')">&raquo;</a>
+                        <a class="page-link" @click="ChangePage('Next')" :class="this.pageNumber >= this.totalPgae ? 'disabled': ''">&raquo;</a>
                     </div>
                 </div>
             </div>
@@ -120,7 +120,7 @@
             page() {
                 let page = []
                 for (let i = 1; i <= this.totalPgae; i++) {
-                    if (i == 1 || i == this.totalPage || (i <= this.pageNumber + 2 && i >= this.pageNumber - 2)) {
+                    if (i == 1 || i == this.totalPages || (i <= this.pageNumber + 2 && i >= this.pageNumber - 2)) {
                         page.push(i)
                     } else if (i == this.pageNumber + 3 || i == this.pageNumber - 3) {
                         page.push('...')
@@ -187,6 +187,11 @@
     }
     .pagination4 a.active {
         border: 1px solid #3b82f6;
+    }
+    .pagination4 a.disabled {
+        pointer-events: none;
+        cursor: default;
+        background-color: #ddd;
     }
     .pagination5 a:first-child {
         border-top-left-radius: 5px;

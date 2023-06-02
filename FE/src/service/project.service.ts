@@ -1,4 +1,4 @@
-import { HTTP, API_KEY_1, HTTP_API_GITLAB } from '@/http-common'
+import { HTTP, API_KEY_1, HTTP_API_GITLAB, API_KEY } from '@/http-common'
 import { ApiApplication } from '../config/app.config'
 
 export class ProjectService {
@@ -18,5 +18,8 @@ export class ProjectService {
     }
     public static filterProjectByNameStaff(idStaff: Number, name: string, pageIndex: number, pageSize: number) {
         return HTTP.get(ApiApplication.PROJECT.SEARCH_PROJECT_BY_NAME_STAFF(idStaff, name, pageIndex, pageSize))
+    }
+    public static getAllProjectByUser(idUser: Number) {
+        return HTTP.get(ApiApplication.PROJECT.GET_ALL_PROJECT_BY_USER(idUser, API_KEY))
     }
 }

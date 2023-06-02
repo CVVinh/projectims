@@ -13,7 +13,7 @@
         <div class="container mt-3">
             <div class="detail__content">
             <div class="row">
-                <div class="col-sm-12 col-md-7 d-flex justify-content-start">
+                <div class="col-sm-12 col-md-7 ">
                     <div class="row">
                         <div class="col-sm-12 col-md-6 col-lg-6 mb-3">
                             <date-picker
@@ -21,6 +21,7 @@
                                 type="year"
                                 class="date_time_pick"
                                 placeholder="Chọn năm"
+                                style="width: 100%;"
                             ></date-picker>
                         </div>
                         <div class="col-sm-12 col-md-6 col-lg-6  mb-3" v-if="selectedallUser">
@@ -133,14 +134,22 @@
         watch: {
             filterLeaveOff: {
                 handler: async function Change(newVal) {
-                    await this.getUserInfoLeaveOffById(newVal.sortMonth, newVal.selectedIdUser)
+                    if(newVal.sortMonth==null){
+                        this.filterLeaveOff.selectedIdUser = null
+                        this.chartData = null
+                        this.chartOptions = null
+                        return
+                    }
+                    else {
+                        await this.getUserInfoLeaveOffById(newVal.sortMonth, newVal.selectedIdUser)
+                    }
                 },
                 deep: true,
             },
         },
-        beforeUpdate() {
+        async beforeUpdate() {
             this.getAllUser()
-            if(!this.selectedallUser) this.getUserInfoLeaveOffById(this.filterLeaveOff.sortMonth)
+            await this.getUserInfoLeaveOffById(this.filterLeaveOff.sortMonth, this.filterLeaveOff.selectedIdUser)
         },
         methods: {
             formartDate(date) {
@@ -156,15 +165,19 @@
                         console.log(err)
                     })
             },
-            getUserInfoLeaveOffById(sortMonth, selectedIdUser) {
+            async getUserInfoLeaveOffById(sortMonth, selectedIdUser) {
                 this.dataLeaveOff = []
-                let idUser = 0
                 if (!this.selectedallUser) {
-                    idUser = checkAccessModule.getUserIdCurrent()
-                } else {
-                    idUser = selectedIdUser
+                    this.filterLeaveOff.selectedIdUser = checkAccessModule.getUserIdCurrent()
+                } 
+                else if(selectedIdUser==null){
+                    this.filterLeaveOff.selectedIdUser = checkAccessModule.getUserIdCurrent()
                 }
-                LeaveOffService.getInfoUserLeaveOff(idUser, DateHelper.convertUTC(sortMonth)).then((res) => {
+                else {
+                    this.filterLeaveOff.selectedIdUser = selectedIdUser
+                }
+                if(sortMonth!=null)
+                await LeaveOffService.getInfoUserLeaveOff(this.filterLeaveOff.selectedIdUser, DateHelper.convertUTC(sortMonth)).then((res) => {
                     let totalRestMinute = res.data._Data.dayLeaveOff
                     this.detailLeaveoff.dayLeaveOff = res.data._Data.dayLeaveOff / 480
                     this.detailLeaveoff.numberOfLeaveAccept = res.data._Data.numberOfLeaveAccept

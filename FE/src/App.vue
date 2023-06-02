@@ -25,7 +25,7 @@ onMounted(async () => {
     if (permission === 'granted') {
         console.log('Permission Access')
     } else {
-        console.log('Permission denied')
+        console.error('Permission denied')
     }
 })
 </script>

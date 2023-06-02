@@ -52,12 +52,12 @@
                     <DataTable
                         :value="listLeaveOffbyUser"
                         :rows="5"
+                        :rowHover="true"
                         ref="dt"
                         :loading="loading"
-                        showGridlines="true"
+                        showGridlines
                         responsiveLayout="scroll"
                         :globalFilterFields="[
-                            '#',
                             'id',
                             'createTime',
                             'startTime',
@@ -68,7 +68,7 @@
                         ]"
                     >
                         <template #empty> Không tìm thấy. </template>
-                        <Column field="#" header="No.">
+                        <Column field="#" header="#">
                             <template #body="{ index }">
                                 {{ index + 1 + (this.resultPgae.pageNumber - 1) * this.resultPgae.pageSize }}
                             </template>
@@ -185,7 +185,6 @@ export default {
             isChange: false,
             loading: true,
             listLeaveOffbyUser: [],
-            userLeave: jwtDecode(localStorage.getItem('token')),
             leaveOffSelected: new LeaveOffDto(),
             leaveOffDetail: new LeaveOffDto(),
             statusLeave: [
@@ -230,12 +229,20 @@ export default {
         resultPgae: {
             handler: function change() {
                 this.getAllLeaveOffRegister()
-                // this.getTaskByProject()
             },
             deep: true,
         },
     },
     methods: {
+        showError(message) {
+            this.$toast.add({ severity: 'error', summary: 'Lỗi!', detail: message, life: 2000 })
+        },
+        showSuccess(message) {
+            this.$toast.add({ severity: 'success', summary: 'Thành công!', detail: message, life: 2000 })
+        },
+        showWarn(message) {
+            this.$toast.add({ severity: 'warn', summary: 'Cảnh báo!', detail: message, life: 2000 })
+        },
         async setChange() {
             this.isChange = true
         },
@@ -352,9 +359,6 @@ export default {
                     this.listLeaveOffbyUser = res.data._Data
                 },
             )
-            // await HTTP.get(GET_LIST_LEAVEOFF_BY_USER(userId)).then((res) => {
-            //     this.listLeaveOffbyUser = res.data._Data
-            // })
             this.loading = false
         },
 
@@ -382,29 +386,14 @@ export default {
                 HTTP.delete(DELETE_LEAVE_OFF(data.id))
                     .then((res) => {
                         if (res.status === HttpStatus.OK) {
-                            this.$toast.add({
-                                severity: 'success',
-                                summary: 'Thành công',
-                                detail: res.data._Message,
-                                life: 3000,
-                            })
+                            this.showSuccess(res.data._Message)
                             this.getAllLeaveOffRegister()
                         } else {
-                            this.$toast.add({
-                                severity: 'warn',
-                                summary: 'Cảnh báo',
-                                detail: res.data._Message,
-                                life: 3000,
-                            })
+                            this.showWarn(res.data._Message)
                         }
                     })
                     .catch((err) => {
-                        this.$toast.add({
-                            severity: 'error',
-                            summary: 'Lỗi',
-                            detail: err.message,
-                            life: 3000,
-                        })
+                        this.showError("Có lỗi trong quá trình xử lý!")
                     })
             }
         },
@@ -430,30 +419,6 @@ export default {
     },
 }
 </script>
-<style>
-/* .p-card-header {
-        padding: 20px 20px 0px 20px !important;
-    }
+<style lang="scss" scoped>
 
-    .p-card .p-card-body {
-        padding: 0px 1.25rem 1.25rem 1.25rem !important;
-    }
-    .p-datatable-header {
-        background-color: #607d8b !important;
-    }
-    @media (max-width: 573px) {
-        .p-datatable-header .inline .col-md-12 button {
-            font-size: 10px;
-        }
-        .p-datatable-header h5 {
-            font-size: 15px;
-        }
-        .p-datatable {
-            font-size: 15px;
-        }
-        .p-datatable .p-datatable-wrapper tbody tr td button {
-            height: 40px;
-            width: 2rem;
-        }
-    } */
 </style>

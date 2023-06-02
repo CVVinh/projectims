@@ -12,6 +12,7 @@ namespace BE.Services.MemberProjectServices
         Task<BaseResponse<ICollection<Member_Project>>> GetMembersByIdProjectAsync(int idProject);
         Task<BaseResponse<ICollection<Member_Project>>> GetMembersByListIdProjectAsync(List<int> idProject);
         Task<BaseResponse<Member_Project>> AddNewMemberAsync(AddMemberDto addMemberDto);
+        Task<BaseResponse<List<Member_Project>>> AddMemberFromGitAsync(List<AddMemberDto> addMemberDtos);
         Task<BaseResponse<Member_Project>> DeleteMemberAsync(int idMember);
         Task<BaseResponse<Member_Project>> DeleteMemberInProjectAsync(int idMember, int idProject);
         Task<BaseResponse<ICollection<Member_Project>>> GetMemberByIdAsync(int idMemberProject);
@@ -53,6 +54,41 @@ namespace BE.Services.MemberProjectServices
                 message = "Add new member failed !";
                 data = null;
                 return new BaseResponse<Member_Project>(success, message, data);
+            }
+        }
+
+        public async Task<BaseResponse<List<Member_Project>>> AddMemberFromGitAsync(List<AddMemberDto> addMemberDtos)
+        {
+            var success = false;
+            var message = "";
+            var data = new List<Member_Project>();
+            try
+            {
+                foreach (var item in addMemberDtos)
+                {
+                    var getUser = await _appContext.Users.Where(u => u.isDeleted == 0 && u.idUserGitLab.Equals(item.member)).FirstOrDefaultAsync();
+                    if (getUser != null)
+                    {
+                        var newMember = new Member_Project
+                        {
+                            createUser = item.createUser,
+                            createDate = DateTime.Now,
+                            member = getUser.id,
+                            idProject = item.idProject
+                        };
+                        await _appContext.Member_Projects.AddAsync(newMember);
+                        data.Add(newMember);
+                    }
+                }
+                await _appContext.SaveChangesAsync();
+                success = true;
+                message = "Add new member sucessfully";
+                return new BaseResponse<List<Member_Project>>(success, message, data);
+            }
+            catch (Exception)
+            {
+                message = "Add new member failed!";
+                return new BaseResponse<List<Member_Project>>(success, message, data);
             }
         }
 

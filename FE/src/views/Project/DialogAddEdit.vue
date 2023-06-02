@@ -50,9 +50,9 @@
                                             v$.dataProject.projectCode.$pending.$response
                                         "
                                         class="p-error"
-                                        >{{
-                                            v$.dataProject.projectCode.required.$message.replace('Value', 'projectGit')
-                                        }}</small
+                                        >
+                                        <!-- {{ v$.dataProject.projectCode.required.$message.replace('Value', 'projectGit')}} -->
+                                        Tên dự án không được để trống!</small
                                     >
                                 </div>                                        
                                 <div class="col-sm-12 col-md-6 col-lg-6">
@@ -104,7 +104,8 @@
                                     :key="index"
                                 >
                                     <small class="p-error">
-                                        {{ error.$message.replace('Value', 'Project name') }}
+                                        <!-- {{ error.$message.replace('Value', 'Project name') }} -->
+                                        Tên dự án không được để trống!
                                     </small>
                                 </span>
                             </span>
@@ -114,7 +115,9 @@
                                     v$.dataProject.name.$pending.$response
                                 "
                                 class="p-error"
-                                >{{ v$.dataProject.name.required.$message.replace('Value', 'Project name') }}</small
+                                >
+                                <!-- {{ v$.dataProject.name.required.$message.replace('Value', 'Project name') }} -->
+                                Tên dự án không được để trống!</small
                             >
                         </div>
                     </div>                 
@@ -147,9 +150,10 @@
                                     v-for="(error, index) of v$.dataProject.projectCode.$errors"
                                     :key="index"
                                 >
-                                    <small class="p-error">{{
-                                        error.$message.replace('Value', 'Project code')
-                                    }}</small>
+                                    <small class="p-error">
+                                        <!-- {{error.$message.replace('Value', 'Project code')}} -->
+                                        Mã dự án không được để trống!
+                                    </small>
                                 </span>
                             </span>
                             <small
@@ -158,9 +162,10 @@
                                     v$.dataProject.projectCode.$pending.$response
                                 "
                                 class="p-error"
-                                >{{
-                                    v$.dataProject.projectCode.required.$message.replace('Value', 'Project code')
-                                }}</small
+                                >
+                                <!-- {{v$.dataProject.projectCode.required.$message.replace('Value', 'Project code')}} -->
+                                Mã dự án không được để trống!
+                                </small
                             >
                         </div>
                     </div>
@@ -206,9 +211,10 @@
                                     v$.dataProject.startDate.$pending.$response
                                 "
                                 class="p-error"
-                                >{{
-                                    v$.dataProject.startDate.required.$message.replace('Value', 'Start date')
-                                }}</small
+                                >
+                                <!-- {{v$.dataProject.startDate.required.$message.replace('Value', 'Start date')}} -->
+                                Ngày bắt đầu không được để trống!
+                                </small
                             >
                             <!-- <small
                                 v-if="
@@ -276,6 +282,8 @@
                                     optionLabel="fullName"
                                     optionValue="id"
                                     class="custom-input-h"
+                                    :filter="true"
+                                    :showClear="true"
                                     :class="{ 'p-invalid': v$.dataProject.idLeader.$invalid && submitted }"
                                 />
                             </div>
@@ -285,7 +293,9 @@
                                     v$.dataProject.idLeader.$pending.$response
                                 "
                                 class="p-error"
-                                >{{ v$.dataProject.idLeader.required.$message.replace('Value', 'Leader') }}</small
+                                ><!-- {{ v$.dataProject.idLeader.required.$message.replace('Value', 'Leader') }} -->
+                                Leader không được bỏ trống!
+                                </small
                             >
                         </div>
                     </div>
@@ -360,6 +370,7 @@
     import { checkAccessModule } from '@/helper/checkAccessModule'
     import ButtonCustom from '@/components/buttons/ButtonCustom.vue'
     import ButtonCustomEdit from '@/components/buttons/ButtonCustomEdit.vue'
+import { TaskService } from '@/service/task.service'
 
         export default {
         components: { ButtonCustom, ButtonCustomEdit },
@@ -377,6 +388,7 @@
                 checkIdgitLab: null,
                 idProjectInternal: null,
                 minDate: null,
+                dataAssigneeIssue: [],
             }
         },
         async beforeUpdate() {
@@ -384,15 +396,13 @@
             await this.getListLeader()
         },
         async updated(){
-            
             if (this.projectSelected.id) {
-                
                 if(this.projectSelected.isOnGitlab === true){    
                     this.dataProject = this.projectSelected 
                     this.dataProject.projectCode = Number(this.projectSelected.projectCode)
                     this.dataProject.subProjectCode = this.projectSelected.subProjectCode
                     this.minDate = new Date(this.projectSelected.startDate)
-                }else{
+                } else {
                    HTTP.get('Project/getProjectById/' + this.projectSelected.id).then((res) => {
                         if (res.status === HttpStatus.OK) {
                             this.dataProject = res.data
@@ -406,18 +416,12 @@
                             this.dataProject.idLeader = res.data.leader
                         }
                     })
-                    
                 }
-                // this.dataProject = this.projectSelected 
-                // this.dataProject.projectCode = Number(this.projectSelected.projectCode)
-                // this.minDate = new Date(this.projectSelected.startDate)
-                
             }
             else{
                 this.getIdProjectInternal()
             }
-        },
-        
+        },        
         validations() {
             return {
                 dataProject: {
@@ -471,6 +475,23 @@
             },
         },
         methods: {
+            async getAllMemberByIdProject(idProject) {
+                this.dataAssigneeIssue = []
+                await TaskService.getAllMenberProject(idProject)
+                .then((res) => {
+                    res.data.forEach((el) => {
+                        this.dataAssigneeIssue.push({
+                            id: el.id,
+                            fullName: el.name,
+                            created_at: el.created_at,
+                            username: el.username,
+                        })
+                    })
+                })
+                .catch((err) => {
+                    console.log(err)
+                })
+            },
             clearData(newValue) {
                 if (this.isOnGitlab === true) {
                     this.dataProject = new ProjectDto({
@@ -535,6 +556,14 @@
                 this.resetForm()
                 this.$emit('closeDialog')
             },
+            openHandlerAddEdit(){
+                this.$emit('closeDialog')
+                this.$emit('handlerOpenAddEditProject')
+            },
+            closeHandlerAddEdit(){
+                this.resetForm()
+                this.$emit('handlerCloseAddEditProject')
+            },
             getAllProject() {
                 this.$emit('getAllProject')
             },
@@ -542,21 +571,14 @@
                 this.submitted = true
                 if (this.v$.$invalid === false) {
                     if (this.projectSelected.id) {
-                        if (new Date(this.dataProject.endDate).getFullYear === 1970) {
-                            this.editData()
-                        } else {
-                           
-                            this.editData()
-                        }
+                        this.editData()
                     } else {
                         this.AddData()
                     }
-                } else {
-                    this.showWarn('Mời nhập đầy đủ các trường bắt buộc')
                 }
             },
             async AddData() {
-                let userLogin = LocalStorage.jwtDecodeToken()
+                this.openHandlerAddEdit()
                 if(this.dataProject.projectName === ''|| this.dataProject.projectName === null || this.dataProject.projectName === undefined){
                     this.dataProject.projectName = this.dataProject.name
                     this.subProjectCode = this.dataProject.projectCode
@@ -585,22 +607,45 @@
                     dataSave.endDate = new Date()
                 }
                 if (dataSave) {
-                    HTTP.post('Project/addProject', dataSave)
-                        .then((res) => {
+                    var checkProject = this.isOnGitlab;
+                    await HTTP.post('Project/addProject', dataSave)
+                        .then(async (res) => {
                             if (res.status == 200) {
-                                this.showSuccess()
-                                this.onClickCancel()
+                                var idSubProject = res.data.id
+                                if(checkProject){
+                                    //if(res.data.projectCode != res.data.subProjectCode){
+                                        await this.getAllMemberByIdProject(res.data.projectCode);
+                                        if(this.dataAssigneeIssue.length > 0) {
+                                            var addMemberObject = []
+                                            this.dataAssigneeIssue.forEach(ele => {
+                                                var object = {
+                                                    idProject: idSubProject,
+                                                    member: ele.id,
+                                                    createUser: checkAccessModule.getUserIdCurrent(),
+                                                }
+                                                addMemberObject.push(object)
+                                            })
+                                            await HTTP.post('memberProject/addMemberFromGitAsync', addMemberObject)
+                                            .then(async res => {})
+                                            .finally(() => { this.closeHandlerAddEdit() })
+                                        }
+                                    //}
+                                }
+                                this.showSuccess('Thêm mới thành công!')
                                 this.getAllProject()
-                            } else {
-                                this.onClickCancel()
-                            }
+                            } 
                         })
-                        .catch((er) => {
-                            this.showWarn(er.request.response)
+                        .catch((err) => {
+                            if(err.response.status === 400 ){
+                                this.showError('Dự án đã tồn tại!')
+                                this.closeHandlerAddEdit()
+                            }
+                            console.log(err);
                         })
                 }
             },
             editData() { 
+                this.openHandlerAddEdit()
                 let data = {
                     id: this.dataProject.id,
                     name: this.dataProject.name,
@@ -629,66 +674,38 @@
                         .then((res) => {
                             switch (res.status) {
                                 case HttpStatus.OK:
-                                    this.showSuccessEdit()
-                                    this.onClickCancel()
+                                    this.showSuccess('Cập nhật thành công!')
                                     this.getAllProject()
                                     break
                                 case HttpStatus.FORBIDDEN:
                                 case HttpStatus.UNAUTHORIZED:
-                                    this.$toast.add({
-                                        severity: 'error',
-                                        summary: 'Lỗi',
-                                        detail: 'Không có quyền thực hiện thao tác sửa dự án.',
-                                        life: 2000,
-                                    })
-                                    this.onClickCancel()
+                                    this.showError('Bạn không có quyền thực hiện thao tác sửa dự án!')
                                     break
                                 default:
                             }
                         })
-                        .catch((er) => {
-                            this.$toast.add({
-                                severity: 'warn',
-                                summary: 'Cảnh báo',
-                                detail: 'Không có quyền thực hiện thao tác sửa dự án.',
-                                life: 2000,
-                            })
+                        .catch((err) => {
+                            this.closeHandlerAddEdit()
+                            console.log(err);
                         })
                 }
             },
             resetForm() {
-                this.$refs.formAddProject.reset()
-                this.v$.$reset()
-                const initialData = this.$options.data.call(this)
-                Object.assign(this.$data, initialData)
+                this.dataProject = new ProjectDto()
+                this.dataAssigneeIssue = []
+                this.Optionleader = []
             },
-            showSuccess() {
-                this.$toast.add({
-                    severity: 'success',
-                    summary: 'Thành công',
-                    detail: 'Thêm mới thành công!',
-                    life: 3000,
-                })
-            },
-            showSuccessEdit() {
-                this.$toast.add({
-                    severity: 'success',
-                    summary: 'Thành công',
-                    detail: 'Cập nhật thành công!',
-                    life: 3000,
-                })
+            showSuccess(message) {
+                this.$toast.add({ severity: 'success', summary: 'Thành công', detail: 'Thêm mới thành công!', life: 2000,})
             },
             showWarn(err) {
-                this.$toast.add({
-                    severity: 'warn',
-                    summary: 'Cảnh báo',
-                    detail: err,
-                    life: 3000,
-                })
+                this.$toast.add({severity: 'warn',summary: 'Cảnh báo',detail: err, life: 2000, })
+            },
+            showError(message) {
+                this.$toast.add({severity: 'error', summary: 'Lỗi', detail: message, life: 2000, })
             },
             checkStartDate() {
                 if (this.dataProject.startDate < new Date(new Date().toLocaleDateString('en-EU'))) {
-                    // return (this.valid = false)
                     return (this.valid = true)
                 } else {
                     return (this.valid = true)

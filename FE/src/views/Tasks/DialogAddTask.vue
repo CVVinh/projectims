@@ -443,7 +443,7 @@
                         })
                         .catch((err) => {
                             this.$emit('loadingCloseHandlerAddEdit')
-                            this.WarningMessage('Cập nhật công việc thất bại có lỗi gì đó sải ra !')
+                            this.ErrorMessage('Cập nhật công việc thất bại có lỗi gì đó sải ra !')
                         })
                 }
             },
@@ -472,7 +472,7 @@
                                 })
                                 .catch((err) => {
                                     this.$emit('loadingCloseHandlerAddEdit')
-                                    this.WarningMessage('Thêm thời gian dự kiến thất bại trên gitlab có lỗi gì đó xảy ra !')
+                                    this.ErrorMessage('Thêm thời gian dự kiến thất bại trên gitlab có lỗi gì đó xảy ra!')
                                 })
                             }
                             this.resetForm();
@@ -481,7 +481,7 @@
                         })
                         .catch((err) => {
                             this.$emit('loadingCloseHandlerAddEdit')
-                            this.WarningMessage('Cập nhật công việc thất bại trên gitlab có lỗi gì đó xảy ra !')
+                            this.ErrorMessage('Cập nhật công việc thất bại trên gitlab có lỗi gì đó xảy ra!')
                             console.log(err);
                         })
                 }
@@ -549,7 +549,7 @@
                             await this.addMutilateTaskOnAPI()
                         }
                     } else {
-                        this.WarningMessage('Chưa có dữ liệu hoặc chưa chọn tệp !')
+                        this.WarningMessage('Chưa có dữ liệu hoặc chưa chọn tệp!')
                     }
                     this.resetForm()
                 }
@@ -583,13 +583,11 @@
                                         })
                                     }
                                 })
-                                .catch((err) => {
-                                    console.log(err);
-                                })
+                                .catch((err) => { console.log(err); })
                                 //console.log(`Thêm thành công công việc "${newTask.title}" trên GitLab.`)
                             } catch (error) {
                                 this.$emit('loadingCloseHandlerAddEdit')
-                                this.WarningMessage(`Thêm công việc "${newTask.title}" thất bại trên GitLab `)
+                                this.ErrorMessage(`Thêm công việc "${newTask.title}" thất bại trên GitLab `)
                             }
                         }
                         this.$emit('ReloadDataGitLab')
@@ -641,11 +639,11 @@
                         .then((res) => {
                             this.resetForm()
                             this.$emit('ReloadDataGitLab')
-                            this.successMessage('Thêm công việc thành công !')
+                            this.successMessage('Thêm công việc thành công!')
                         })
                         .catch((err) => {
                             this.$emit('loadingCloseHandlerAddEdit')
-                            this.WarningMessage(err)
+                            this.WarningMessage("Kiểm tra quyền người dùng trên gitlab!")
                         })
                     this.$forceUpdate()
                 }
@@ -678,7 +676,7 @@
                         })
                         .catch((err) => {
                             this.$emit('loadingCloseHandlerAddEdit')
-                            this.WarningMessage('Có lỗi gì đó xảy ra khi thực hiện yêu cầu!')
+                            this.WarningMessage('Có lỗi trong quá trình thực hiện!')
                         })
                 }
             },
@@ -772,20 +770,13 @@
                 }
             },
             successMessage(mess) {
-                this.$toast.add({
-                    severity: 'success',
-                    summary: 'Thành công',
-                    detail: mess,
-                    life: 3000,
-                })
+                this.$toast.add({severity: 'success',summary: 'Thành công!',detail: mess,life: 2000,})
             },
             WarningMessage(mess) {
-                this.$toast.add({
-                    severity: 'warn',
-                    summary: 'Cảnh báo',
-                    detail: mess,
-                    life: 2000,
-                })
+                this.$toast.add({severity: 'warn',summary: 'Cảnh báo!',detail: mess,life: 2000,})
+            },
+            ErrorMessage(mess) {
+                this.$toast.add({severity: 'error',summary: 'Lỗi!',detail: mess,life: 2000,})
             },
             closeDialog() {
                 this.resetForm()

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AutoMapper.Execution;
 using BE.Data.Contexts;
 using BE.Data.Dtos;
 using BE.Data.Dtos.LeaveOffDtos;
@@ -16,6 +17,7 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Xml.Linq;
 
 
@@ -75,7 +77,8 @@ namespace BE.Controllers
                                      fullNameUserCreated = _context.Users.Where(s => s.id == x.UserCreated).Select(s => s.FullName).SingleOrDefault(),
                                      fullNameUserUpdate = _context.Users.Where(s => s.id == x.UserUpdate).Select(s => s.FullName).SingleOrDefault(),
                                      fullNameUserId = _context.Users.Where(s => s.id == x.UserId).Select(s => s.FullName).SingleOrDefault(),
-                                 }).OrderBy(x => x.isFinished == false && x.isDeleted == false).ToList();
+                                     statusProject = x.IsDeleted == false && x.IsFinished == false ? "Đang chạy": x.IsFinished == true ? "Đã hoàn thành": x.IsDeleted == false ? "Đã huỷ" : "Đang cập nhật...",
+                                 }).OrderBy(x => x.subProjectCode).ToList();
                 //dsProject = dsProject.OrderBy(s => s.projectCode).ToList();
                 //dsProject = dsProject.GroupBy(x => new { x.projectCode, x.name }).Select(g => g.Count() > 1 ? g.OrderBy(x => x.projectCode).Last() : g.First()).ToList();
                 var pageSize = (int)pageSizeEnum;
@@ -161,7 +164,8 @@ namespace BE.Controllers
                                 fullNameUserCreated = _context.Users.Where(s => s.id == x.UserCreated).Select(s => s.FullName).SingleOrDefault(),
                                 fullNameUserUpdate = _context.Users.Where(s => s.id == x.UserUpdate).Select(s => s.FullName).SingleOrDefault(),
                                 fullNameUserId = _context.Users.Where(s => s.id == x.UserId).Select(s => s.FullName).SingleOrDefault(),
-                            }).OrderBy(x => x.isFinished == false && x.isDeleted == false).ToList();
+                                statusProject = x.IsDeleted == false && x.IsFinished == false ? "Đang chạy" : x.IsFinished == true ? "Đã hoàn thành" : x.IsDeleted == false ? "Đã huỷ" : "Đang cập nhật...",
+                            }).OrderBy(x => x.subProjectCode).ToList();
 
                 var pageSize = (int)pageSizeEnum;
                 var resultPage = await _paginationServiceProject.paginationListTableAsync(list, pageIndex, pageSize);
@@ -211,7 +215,8 @@ namespace BE.Controllers
                                 fullNameUserCreated = _context.Users.Where(s => s.id == x.UserCreated).Select(s => s.FullName).SingleOrDefault(),
                                 fullNameUserUpdate = _context.Users.Where(s => s.id == x.UserUpdate).Select(s => s.FullName).SingleOrDefault(),
                                 fullNameUserId = _context.Users.Where(s => s.id == x.UserId).Select(s => s.FullName).SingleOrDefault(),
-                            }).OrderBy(x => x.isFinished == false && x.isDeleted == false).ToList();
+                                statusProject = x.IsDeleted == false && x.IsFinished == false ? "Đang chạy" : x.IsFinished == true ? "Đã hoàn thành" : x.IsDeleted == false ? "Đã huỷ" : "Đang cập nhật...",
+                            }).OrderBy(x => x.subProjectCode).ToList();
 
                 var pageSize = (int)pageSizeEnum;
                 var resultPage = await _paginationServiceProject.paginationListTableAsync(list, pageIndex, pageSize);
@@ -258,7 +263,8 @@ namespace BE.Controllers
                                 fullNameUserCreated = _context.Users.Where(s => s.id == x.UserCreated).Select(s => s.FullName).SingleOrDefault(),
                                 fullNameUserUpdate = _context.Users.Where(s => s.id == x.UserUpdate).Select(s => s.FullName).SingleOrDefault(),
                                 fullNameUserId = _context.Users.Where(s => s.id == x.UserId).Select(s => s.FullName).SingleOrDefault(),
-                            }).OrderBy(x => x.isFinished == false && x.isDeleted == false).ToList();
+                                statusProject = x.IsDeleted == false && x.IsFinished == false ? "Đang chạy" : x.IsFinished == true ? "Đã hoàn thành" : x.IsDeleted == false ? "Đã huỷ" : "Đang cập nhật...",
+                            }).OrderBy(x => x.subProjectCode).ToList();
 
                 var pageSize = (int)pageSizeEnum;
                 var resultPage = await _paginationServiceProject.paginationListTableAsync(list, pageIndex, pageSize);
@@ -311,27 +317,8 @@ namespace BE.Controllers
                 {
                     return BadRequest("Dự án này đã tồn tại!");
                 }
-                /*            var p = new Projects
-                            {
-
-                                Name = project_Model.Name,
-                                ProjectCode = project_Model.ProjectCode,
-                                Description = project_Model.Description,
-                                StartDate = project_Model.StartDate,
-                                EndDate = project_Model.EndDate,
-                                IsDeleted = false,
-                                IsFinished = false,
-                                UserId = project_Model.UserId,
-                                Leader = project_Model.Leader,
-                                UserCreated = project_Model.UserCreated,
-                                DateCreated = DateTime.Now,
-                                UserUpdate = project_Model.UserCreated,
-                                DateUpdate = DateTime.Now
-
-                            };*/
                 var p = _mapper.Map<Projects>(project_Model);
-                /*var pro = await _context.Projects.SingleOrDefaultAsync(pr => pr.Name == p.Name);*/
-                if (/*pro == null && */p.StartDate < p.EndDate || p.EndDate == null)
+                if (p.StartDate < p.EndDate || p.EndDate == null)
                 { 
                     if (p.IsOnGitlab)
                     {
@@ -339,7 +326,7 @@ namespace BE.Controllers
                     }
                     _context.Add(p);
                     _context.SaveChanges();
-                    return Ok();
+                    return Ok(p);
                 }
                 return BadRequest("Wrong data enter");
             }
@@ -347,22 +334,28 @@ namespace BE.Controllers
             {
                 return BadRequest(ex);
             }
-
-
         }
         [HttpPut("DeleteProject/{id}")]
         [Authorize(Roles = "module:project action:delete")]
-        public IActionResult DeleteProject(int id, IdUserChangeProjectDto request)
+        public async Task<IActionResult> DeleteProject(int id, IdUserChangeProjectDto request)
         {
             try
             {
-                var pro = _context.Projects.SingleOrDefault(p => p.Id == id);
+                var pro = await _context.Projects.SingleOrDefaultAsync(p => p.Id == id);
                 if (pro == null)
                 {
                     return NotFound("Khong tim thay doi tuong");
                 }
                 else
                 {
+                    var getAllMemberInProjects = await _context.Member_Projects.Where(mp => mp.isDeleted == false && mp.idProject == pro.Id).ToArrayAsync();
+                    if (getAllMemberInProjects.Count() > 0)
+                    {
+                        foreach(var item in getAllMemberInProjects)
+                        {
+                            _context.Member_Projects.Remove(item);
+                        }
+                    }
                     _context.Projects.Remove(pro);
                     _context.SaveChanges();
                     return Ok();
@@ -398,7 +391,6 @@ namespace BE.Controllers
                             _context.SaveChanges();
                             return Ok();
                         }
-
                         if (pro.StartDate > pro.EndDate && pro.StartDate < DateTime.UtcNow)
                         {
                             pro.IsFinished = true;
@@ -408,7 +400,6 @@ namespace BE.Controllers
                             _context.SaveChanges();
                             return Ok();
                         }
-
                         if (pro.EndDate == null && pro.StartDate < DateTime.UtcNow)
                         {
                             pro.IsFinished = true;
@@ -418,19 +409,15 @@ namespace BE.Controllers
                             _context.SaveChanges();
                             return Ok();
                         }
-
                         if (pro.EndDate == null && pro.StartDate > DateTime.UtcNow)
                         {
-                            return BadRequest("Ngày bắt đầu không được nhỏ hơn ngày hiện tại hoặc thêm ngày kết thúc");
+                            return BadRequest("Ngày bắt đầu không được nhỏ hơn ngày hiện tại hoặc thêm ngày kết thúc!");
                         }
-
-
                         if (pro.StartDate > pro.EndDate && pro.StartDate > DateTime.UtcNow)
                         {
-                           return BadRequest("Ngày bắt đầu không được nhỏ hơn ngày hiện tại hoặc thêm ngày kết thúc");
+                           return BadRequest("Ngày bắt đầu không được nhỏ hơn ngày hiện tại hoặc thêm ngày kết thúc!");
                         }
-
-                        return BadRequest("Something went wrong");
+                        return BadRequest("Có lỗi xảy ra trong quá trình thực hiện!");
                     }
                     else
                     {
@@ -440,7 +427,6 @@ namespace BE.Controllers
                         _context.SaveChanges();
                         return Ok();
                     }
-          
                 }
             }
             catch (Exception ex)
@@ -792,7 +778,7 @@ namespace BE.Controllers
             {
                 var list = (from c in _context.Projects
                            join x in _context.Users on c.Leader equals x.id
-                           where c.ProjectCode == project
+                           where c.SubProjectCode == project
                            select new
                            {
                                x,
@@ -872,7 +858,8 @@ namespace BE.Controllers
                                     fullNameUserCreated = _context.Users.Where(s => s.id == xk.x.UserCreated).Select(s => s.FullName).SingleOrDefault(),
                                     fullNameUserUpdate = _context.Users.Where(s => s.id == xk.x.UserUpdate).Select(s => s.FullName).SingleOrDefault(),
                                     fullNameUserId = _context.Users.Where(s => s.id == xk.x.UserId).Select(s => s.FullName).SingleOrDefault(),
-                                }).OrderBy(x => x.isFinished == false && x.isDeleted == false).ToList();
+                                    statusProject = xk.x.IsDeleted == false && xk.x.IsFinished == false ? "Đang chạy" : xk.x.IsFinished == true ? "Đã hoàn thành" : xk.x.IsDeleted == false ? "Đã huỷ" : "Đang cập nhật...",
+                                }).OrderBy(x => x.subProjectCode).ToList();
 
                     var pageSize = (int)pageSizeEnum;
                     var resultPage = await _paginationServiceProject.paginationListTableAsync(dsProject, pageIndex, pageSize);
@@ -926,6 +913,7 @@ namespace BE.Controllers
                               fullNameUserCreated = _context.Users.Where(s => s.id == joinResult.x.UserCreated).Select(s => s.FullName).SingleOrDefault(),
                               fullNameUserUpdate = _context.Users.Where(s => s.id == joinResult.x.UserUpdate).Select(s => s.FullName).SingleOrDefault(),
                               fullNameUserId = _context.Users.Where(s => s.id == joinResult.x.UserId).Select(s => s.FullName).SingleOrDefault(),
+                              statusProject = joinResult.x.IsDeleted == false && joinResult.x.IsFinished == false ? "Đang chạy" : joinResult.x.IsFinished == true ? "Đã hoàn thành" : joinResult.x.IsDeleted == false ? "Đã huỷ" : "Đang cập nhật...",
                           }).ToList();
 
                     var pageSize = (int)pageSizeEnum;
@@ -1044,6 +1032,7 @@ namespace BE.Controllers
                                  fullNameUserCreated = _context.Users.Where(s => s.id == joinResult2.joinResult1.x.UserCreated).Select(s => s.FullName).SingleOrDefault(),
                                  fullNameUserUpdate = _context.Users.Where(s => s.id == joinResult2.joinResult1.x.UserUpdate).Select(s => s.FullName).SingleOrDefault(),
                                  fullNameUserId = _context.Users.Where(s => s.id == joinResult2.joinResult1.x.UserId).Select(s => s.FullName).SingleOrDefault(),
+                                 statusProject = joinResult2.joinResult1.x.IsDeleted == false && joinResult2.joinResult1.x.IsFinished == false ? "Đang chạy" : joinResult2.joinResult1.x.IsFinished == true ? "Đã hoàn thành" : joinResult2.joinResult1.x.IsDeleted == false ? "Đã huỷ" : "Đang cập nhật...",
                              }).ToList();
 
                     var pageSize = (int)pageSizeEnum;

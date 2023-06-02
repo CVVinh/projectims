@@ -86,6 +86,7 @@
                         dataKey="id"
                         showGridlines
                         :rowHover="true"
+                        removableSort 
                         v-model:filters="filters"
                         v-model:selection="selectedProject"
                         sortField="projectCode"
@@ -134,21 +135,20 @@
                             :header="col.header"
                             :key="col.field + '_' + index"
                         ></Column>
-                        <Column header="Trạng thái" sortable field="isDeleted">
+                        <Column header="Trạng thái" field="statusProject" sortable>
                             <template #body="{ data }">
                                 <div
-                                    :style="{
-                                        color:
-                                            statusText(data.isFinished, data.isDeleted) === 'Đang chạy'
-                                                ? 'orange'
-                                                : statusText(data.isFinished, data.isDeleted) === 'Đã hoàn thành'
-                                                ? 'green'
-                                                : statusText(data.isFinished, data.isDeleted) === 'Đã xóa'
-                                                ? 'red'
-                                                : null,
-                                    }"
+                                    :class="
+                                        (data.isFinished == false && data.isDeleted == false)
+                                            ? 'badge bg-warning'
+                                            : data.isFinished == true
+                                            ? 'badge bg-success'
+                                            : data.isDeleted == true
+                                            ? 'badge bg-danger'
+                                            : null
+                                    "
                                 >
-                                    {{ statusText(data.isFinished, data.isDeleted) }}
+                                    {{ data.statusProject }}
                                 </div>
                             </template>
                         </Column>
@@ -222,8 +222,9 @@
                 @closeDialog="closeDialog"
                 @getAllProject="Permission"
                 :user="user"
-                :leader="leader"
                 :projectGit="dataProjects"
+                @handlerOpenAddEditProject="handlerOpenAddEditProject()"
+                @handlerCloseAddEditProject="handlerCloseAddEditProject()"
             />
         </div>
     </LayoutDefaultDynamic>
@@ -259,10 +260,19 @@ export default {
             userInfo: [],
             selectedProject: [],
             selectedColumns: null,
-            columns: null,
+            columns: [
+                {field: 'projectCode', header: 'Mã dự án gốc'},
+                { field: 'name', header: 'Tên dự án gốc'},
+                { field: 'description', header: 'Mô tả' },
+                { field: 'fullNameUserId', header: 'PM' },
+                { field: 'leader', header: 'Leader' },
+                { field: 'fullNameUserCreated', header: 'Người tạo' },
+                { field: 'dateCreated', header: 'Ngày tạo' },
+                { field: 'fullNameUserUpdate', header: 'Người chỉnh sửa' },
+                { field: 'dateUpdate', header: 'Ngày chỉnh sửa' },
+            ],
             arr: [],
             data: [],
-            dataExport: [],
             loading: true,
             displayBasic: false,
             pageIndex: [5, 10, 15, 20],
@@ -275,7 +285,6 @@ export default {
             showButton: {
                 isNotSample: false,
             },
-            acceptRole: ['pm', 'admin', 'director', 'leader'],
             dataProjects: [],
             resultPgae: {
                 pageSize: 10,
@@ -318,17 +327,6 @@ export default {
         if (checkAccessModule.checkAccessModule(this.$route.path.replace('/', '')) === true) {
             checkAccessModule.checkPermissionAction(this.$route.path.replace('/', ''), this.showButton)
             await this.Permission()
-            this.columns = [
-                {field: 'projectCode', header: 'Mã dự án gốc'},
-                { field: 'name', header: 'Tên dự án gốc'},
-                { field: 'description', header: 'Mô tả' },
-                { field: 'fullNameUserId', header: 'PM' },
-                { field: 'leader', header: 'Leader' },
-                { field: 'fullNameUserCreated', header: 'Người tạo' },
-                { field: 'dateCreated', header: 'Ngày tạo' },
-                { field: 'fullNameUserUpdate', header: 'Người chỉnh sửa' },
-                { field: 'dateUpdate', header: 'Ngày chỉnh sửa' },
-            ]
             await this.handlerGetInfoProjects()
             this.loading = false
         } else {
@@ -355,58 +353,13 @@ export default {
                         this.goToProjectOnNotGit(event.data.projectCode);
                     }
                 })
-                .catch((err) => {
-                    console.log(err)
-                })
+                .catch((err) => { console.log(err) })
         },
-        checkIsGroup(nameGroup) {
-            var name = nameGroup.toLowerCase()
-            if (name === 'admin') {
-                if (checkAccessModule.isAdmin()) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-
-            if (name === 'lead') {
-                if (checkAccessModule.isLead()) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-
-            if (name === 'pm') {
-                if (checkAccessModule.isPm()) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-
-            if (name === 'office') {
-                if (checkAccessModule.isOffice() && checkAccessModule.getListNameGroup().length === 1) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-
-            if (name === 'staff') {
-                if (checkAccessModule.isStaff()) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-        },
-
         checkCanOperation(nameButton, data) {
             const name = nameButton.toLowerCase()
             if (name === 'them') {
             }
-            if (name === 'sua') {
+            else if (name === 'sua') {
                 if (
                     (data.isDeleted === false &&
                         data.isFinished === false &&
@@ -418,7 +371,7 @@ export default {
                     return true
                 }
             }
-            if (name === 'xoa') {
+            else if (name === 'xoa') {
                 if (
                     (data.isDeleted === false &&
                         data.isFinished === false &&
@@ -430,11 +383,11 @@ export default {
                     return true
                 }
             }
-            if (name === 'xoanhieu') {
+            else if (name === 'xoanhieu') {
             }
-            if (name === 'xuatfile') {
+            else if (name === 'xuatfile') {
             }
-            if (name === 'xacnhan') {
+            else if (name === 'xacnhan') {
                 if (
                     (data.isDeleted === false &&
                         data.isFinished === false &&
@@ -446,18 +399,18 @@ export default {
                     return true
                 }
             }
-            if (name === 'xacnhannhieu') {
+            else if (name === 'xacnhannhieu') {
             }
-            if (name === 'themthanhvien') {
+            else if (name === 'themthanhvien') {
                 if (data.isDeleted === false && data.isFinished === false) {
                     return false
                 } else {
                     return true
                 }
             }
-            if (name === 'tuchoi') {
+            else if (name === 'tuchoi') {
             }
-            if (name === 'thaotac') {
+            else if (name === 'thaotac') {
                 if (
                     data.idLeader === Number(checkAccessModule.getUserIdCurrent()) ||
                     data.userId === Number(checkAccessModule.getUserIdCurrent()) ||
@@ -477,33 +430,17 @@ export default {
             this.isOpenDialog = false
             this.projectSelected = []
         },
+        handlerOpenAddEditProject(){
+            this.loading = true
+        },
+        handlerCloseAddEditProject(){
+            this.loading = false
+        },
         openDialogEdit(data) {
             this.projectSelected = { ...data }
             this.isOpenDialog = true
         },
-        async canAddProject() {
-            return false
-        },
-        finishMulti() {
-            let bool = this.selectedProject.filter(function (element, index) {
-                if (element.isFinished === true || element.isDeleted === true) {
-                    return false
-                } else {
-                    return true
-                }
-            })
-            if (this.selectedProject == null) {
-                this.showWarn('Vui lòng chọn một dự án để kết thúc!')
-                return
-            }
-            if (bool.length > 0) {
-                bool.forEach((element) => {
-                    this.finishProject(element.id)
-                })
-            } else this.showWarn('Không thể hoàn thành dự án!')
-            this.selectedProject = []
-        },
-        finishProject(id) {
+        async finishProject(id) {
             this.$confirm.require({
                 message: 'Bạn có chắc chắn xác nhận duyệt dự án này?',
                 header: 'Duyệt',
@@ -514,36 +451,20 @@ export default {
                 rejectIcon: 'pi pi-times',
                 acceptClass: 'p-button-primary CustomButtonPrimeVue',
                 rejectClass: 'p-button-secondary p-button-outlined aloha CustomButtonPrimeVue',
-                accept: () => {
-                    HTTP.put('Project/FinishProject/' + id, { UserId: checkAccessModule.getUserIdCurrent() })
+                accept: async () => {
+                    await HTTP.put('Project/FinishProject/' + id, { UserId: checkAccessModule.getUserIdCurrent() })
                         .then((res) => {
                             if (res.status == 200) {
                                 this.Permission()
-                                this.$toast.add({
-                                    severity: 'success',
-                                    summary: 'Thành công',
-                                    detail: 'Dự án hoàn tất!',
-                                    life: 2000,
-                                })
+                                this.showSuccess('Dự án hoàn tất!')
                             }
                         })
                         .catch((err) => {
-                            this.$toast.add({
-                                severity: 'error',
-                                summary: 'Lỗi',
-                                detail: err.request.response,
-                                life: 2000,
-                            })
+                            this.showError(err.response.data)
+                            console.log(err);
                         })
                 },
-                reject: () => {
-                    this.$toast.add({
-                        severity: 'error',
-                        summary: 'Từ chối',
-                        detail: 'Bạn đã hủy thao tác',
-                        life: 3000,
-                    })
-                },
+                reject: () => { return; },
             })
         },
         onToggle(value) {
@@ -552,21 +473,10 @@ export default {
         formatDate(value) {
             return DateHelper.convertFullDate(value)
         },
-        statusText(isfinish, isdelete) {
-            if (isdelete === false && isfinish === false) {
-                return 'Đang chạy'
-            }
-            if (isfinish === true) {
-                return 'Đã hoàn thành'
-            }
-            if (isdelete === true) {
-                return 'Đã xóa'
-            }
-        },
         async handlerReload() {
             this.data = []
             this.filterNameProject = ''
-            this.Permission()
+            await this.Permission()
         },
         async PermissionFilterProject(value, id, newValName) {
             if (value.length > 0) {
@@ -605,10 +515,8 @@ export default {
                         return index === self.findIndex((t) => t.id === obj.id)
                     })
                 })
-                .catch(() => {
-                    this.Permission()
-                })
-            this.loading = false
+                .catch(() => { this.Permission() })
+                .finally(() => { this.loading = false })
         },
         async filterProjectByNameOfLead(idLead, name) {
             this.loading = true
@@ -636,7 +544,7 @@ export default {
                 .catch(() => {
                     this.getProjectByLead(idLead)
                 })
-            this.loading = false
+                .finally(() => { this.loading = false })
         },
         async filterProjectByNameOfStaff(idStaff, name) {
             this.loading = true
@@ -663,7 +571,7 @@ export default {
                 .catch(() => {
                     this.getProjectByStaff(idStaff)
                 })
-            this.loading = false
+                .finally(() => { this.loading = false })
         },
         async Permission() {
             this.data = []
@@ -682,7 +590,6 @@ export default {
             } else {
                 this.canExport = true
             }
-            this.loading = false
         },
         async getAllProject() {
             await HTTP.get(
@@ -715,12 +622,11 @@ export default {
                 .catch((err) => {
                     console.log(err)
                 })
-            this.loading = false
+                .finally(() => { this.loading = false })
         },
         async getProjectByLead(idlead) {
             await HTTP.get(
-                `/Project/getAllProjectByLead/${idlead}?pageIndex=${this.resultPgae.pageNumber}&pageSizeEnum=${this.resultPgae.pageSize}`,
-            )
+                `/Project/getAllProjectByLead/${idlead}?pageIndex=${this.resultPgae.pageNumber}&pageSizeEnum=${this.resultPgae.pageSize}`,)
                 .then((res) => {
                     this.totalMapPage = res.data._totalPages
                     this.totalItem = res.data._totalItems
@@ -736,11 +642,9 @@ export default {
                         }
                         this.data.push(object)
                     })
-
                     this.data = this.data.filter((obj, index, self) => {
                         return index === self.findIndex((t) => t.id === obj.id)
                     })
-
                     if (this.data.length > 0) {
                         this.canExport = false
                     } else {
@@ -748,6 +652,7 @@ export default {
                     }
                 })
                 .catch((err) => console.log(err))
+                .finally(() => { this.loading = false })
         },
         async getProjectByStaff(idstaff) {
             await HTTP.get(
@@ -772,7 +677,6 @@ export default {
                     this.data = this.data.filter((obj, index, self) => {
                         return index === self.findIndex((t) => t.id === obj.id)
                     })
-
                     if (this.data.length > 0) {
                         this.canExport = false
                     } else {
@@ -780,49 +684,7 @@ export default {
                     }
                 })
                 .catch((err) => console.log(err))
-        },
-        //bỏ
-        async getPMName() {
-            for (let i = 0; i < this.data.length; i++) {
-                if (this.data[i].userId != 0) {
-                    var PM = await this.getUserById(this.data[i].userId)
-                    this.data[i].userId = PM.fullName
-                    this.data[i].dateUpdate = this.formatDate(this.data[i].dateUpdate)
-                    this.data[i].dateCreated = this.formatDate(this.data[i].dateCreated)
-                } else {
-                    this.data[i].PMName = 'Đang cập nhật...'
-                }
-            }
-        },
-        //bỏ
-        async getUserCreated() {
-            for (let i = 0; i < this.data.length; i++) {
-                if (this.data[i].userCreated != 0) {
-                    var usercreate = await this.getUserById(this.data[i].userCreated)
-                    this.data[i].userCreated = usercreate.fullName
-                } else {
-                    this.data[i].userCreated = 'Đang cập nhật...'
-                }
-            }
-        },
-        //bỏ
-        async getUserEdited() {
-            for (let i = 0; i < this.data.length; i++) {
-                if (this.data[i].userUpdate != 0) {
-                    var userEdited = await this.getUserById(this.data[i].userUpdate)
-                    this.data[i].userUpdate = userEdited.fullName
-                } else {
-                    this.data[i].userEdited = 'Đang cập nhật...'
-                }
-            }
-        },
-        //bỏ
-        addProject() {
-            this.$router.push('/project/add')
-        },
-        //bỏ
-        editProject(id) {
-            router.push('/project/edit/' + id)
+                .finally(() => { this.loading = false })
         },
         async deleteProject(id) {
             let userlogin = jwtDecode(localStorage.getItem('token'))
@@ -831,16 +693,11 @@ export default {
                 .then(async (res) => {
                     if (res.status == 200) {
                         await this.Permission()
-                        this.$toast.add({
-                            severity: 'success',
-                            summary: 'Thành công',
-                            detail: 'Xóa thành công!',
-                            life: 2000,
-                        })
+                        this.showSuccess('Xóa thành công!')
                     }
                 })
-                .catch(() => {
-                    this.showWarn('Không có quyền thực hiện thao tác xóa dự án.')
+                .catch((err) => {
+                    console.log(err);
                 })
         },
         canOperation(isDeleted, isFinished, actionDelete = null) {
@@ -865,7 +722,6 @@ export default {
                 rejectIcon: 'pi pi-times',
                 acceptClass: 'p-button-danger CustomButtonPrimeVue',
                 rejectClass: 'p-button-secondary p-button-outlined aloha CustomButtonPrimeVue',
-
                 accept: () => {
                     this.deleteProject(id)
                 },
@@ -874,96 +730,55 @@ export default {
                 },
             })
         },
-        showSuccess() {
-            this.$toast.add({
-                severity: 'success',
-                summary: 'Thành công',
-                detail: 'Xóa thành công!',
-                life: 2000,
-            })
+        showSuccess(message) {
+            this.$toast.add({severity: 'success', summary: 'Thành công!', detail: message, life: 2000, })
         },
         showWarn(message) {
-            this.$toast.add({ severity: 'warn', summary: 'Cảnh báo', detail: message, life: 2000 })
+            this.$toast.add({ severity: 'warn', summary: 'Cảnh báo!', detail: message, life: 2000 })
+        },
+        showError(message) {
+            this.$toast.add({ severity: 'error', summary: 'Lỗi!', detail: message, life: 2000 })
         },
         toDetailProject(id) {
             this.$router.push({ name: 'detailproject', params: { id: id } })
         },
-        colorDeleted(status) {
-            if (status == false) return 'bg-success'
-            return 'bg-danger'
-        },
-        colorFinished(status) {
-            if (status == true) return 'bg-warning'
-            return 'bg-info'
+        FormatJSon(FilterData, JsonData) {
+            return JsonData.map((v) =>
+                FilterData.map((j) => {
+                    return v[j]
+                }),
+            )
         },
         exportToExcel() {
-            //Thừa api `OTs/exportExcelFollowRole/${month}/${year}/${idProject}/${this.token.listGroup[0]}/${checkAccessModule.getUserIdCurrent()
-            this.dataExport = []
-            if (this.selectedProject.length > 0) {
-                this.data.map((ele) => {
-                    this.selectedProject.map((element) => {
-                        if (ele.id === element.id) {
-                            const object = {
-                                projectCode: ele.projectCode,
-                                name: ele.name,
-                                subProjectCode: ele.subProjectCode,
-                                projectName: ele.projectName,
-                                startDate: this.getFormattedDate(new Date(ele.startDate)),
-                                endDate:
-                                    ele.endDate === null
-                                        ? 'Đang cập nhật'
-                                        : this.getFormattedDate(new Date(ele.endDate)),
-                                PMName: ele.fullNameUserId,
-                                description: ele.description,
-                                leader: ele.leader,
-                                userCreated: ele.fullNameUserCreated,
-                                dateCreated: this.getFormattedDate(new Date(ele.dateCreated)),
-                                userEdited: ele.fullNameUserUpdate,
-                                dateUpdate: this.getFormattedDate(new Date(ele.dateUpdate)),
-                                status:
-                                    ele.isDeleted === false && ele.isFinished === false
-                                        ? 'Đang chạy'
-                                        : ele.isDeleted === true
-                                        ? 'Đã xóa'
-                                        : ele.isFinished === true
-                                        ? 'Đã hoàn thành'
-                                        : 'Lỗi',
-                            }
-                            this.dataExport.push(object)
-                        }
-                    })
-                })
-            } else {
-                this.data.map((ele) => {
-                    const object = {
-                        projectCode: ele.projectCode,
-                        name: ele.name,
-                        subProjectCode: ele.subProjectCode,
-                        projectName: ele.projectName,
-                        startDate: this.getFormattedDate(new Date(ele.startDate)),
-                        endDate: ele.endDate === null ? 'Đang cập nhật' : this.getFormattedDate(new Date(ele.endDate)),
-                        PMName: ele.fullNameUserId,
-                        description: ele.description,
-                        leader: ele.leader,
-                        userCreated: ele.fullNameUserCreated,
-                        dateCreated: this.getFormattedDate(new Date(ele.dateCreated)),
-                        userEdited: ele.fullNameUserUpdate,
-                        dateUpdate: this.getFormattedDate(new Date(ele.dateUpdate)),
-                        status:
-                            ele.isDeleted === false && ele.isFinished === false
-                                ? 'Đang chạy'
-                                : ele.isDeleted === true
-                                ? 'Đã xóa'
-                                : ele.isFinished === true
-                                ? 'Đã hoàn thành'
-                                : 'Lỗi',
-                    }
-                    this.dataExport.push(object)
-                })
-            }
-
+           var dataExport = []
+            this.data.map((ele) => {
+                const object = {
+                    projectCode: ele.projectCode,
+                    name: ele.name,
+                    subProjectCode: ele.subProjectCode,
+                    projectName: ele.projectName,
+                    startDate: this.getFormattedDate(new Date(ele.startDate)),
+                    endDate: ele.endDate === null ? 'Đang cập nhật' : this.getFormattedDate(new Date(ele.endDate)),
+                    PMName: ele.fullNameUserId,
+                    description: ele.description!=null ? ele.description: "",
+                    leader: ele.leader,
+                    userCreated: ele.fullNameUserCreated,
+                    dateCreated: this.getFormattedDate(new Date(ele.dateCreated)),
+                    userEdited: ele.fullNameUserUpdate,
+                    dateUpdate: this.getFormattedDate(new Date(ele.dateUpdate)),
+                    status:
+                        ele.isDeleted === false && ele.isFinished === false
+                            ? 'Đang chạy'
+                            : ele.isDeleted === true
+                            ? 'Đã xóa'
+                            : ele.isFinished === true
+                            ? 'Đã hoàn thành'
+                            : 'Đang cập nhật',
+                }
+                dataExport.push(object)
+            })
             import('../../plugins/Export2Excel.js').then((excel) => {
-                const OBJ = this.dataExport
+                const OBJ = dataExport
                 const Header = [
                     'Mã dự án gốc',
                     'Tên dự án gốc',
@@ -980,7 +795,6 @@ export default {
                     'Ngày chỉnh sửa',
                     'Trạng thái',
                 ]
-
                 const Field = [
                     'projectCode',
                     'name',
@@ -997,63 +811,25 @@ export default {
                     'dateUpdate',
                     'status',
                 ]
-
                 const Data = this.FormatJSon(Field, OBJ)
                 excel.export_json_to_excel({
                     header: Header,
                     data: Data,
-                    sheetName: 'Danh sách dự án',
+                    sheetName: 'Sheet1',
                     filename: 'Danh sách dự án',
                     autoWidth: true,
                     bookType: 'xlsx',
                 })
             })
-
-            // HTTP.get(`Project/exportExcel/`)
-            //     .then((res) => {
-            //         if (res.status == 200) {
-            //             this.$toast.add({
-            //                 severity: 'success',
-            //                 summary: 'Thành công',
-            //                 detail: 'File excel đã được lưu thành công.',
-            //                 life: 3000,
-            //             })
-            //             window.location = res.data
-            //         }
-            //     })
-            //     .catch(() => {
-            //         this.$toast.add({
-            //             severity: 'warn',
-            //             summary: 'Cảnh báo ',
-            //             detail: 'Bạn không có quyền thực hiện thao tác xuất file excel!',
-            //             life: 3000,
-            //         })
-            //     })
         },
-        FormatJSon(FilterData, JsonData) {
-            return JsonData.map((v) =>
-                FilterData.map((j) => {
-                    return v[j]
-                }),
-            )
-        },
+        
         getFormattedDate(date) {
             var year = date.getFullYear()
-
             var month = (1 + date.getMonth()).toString()
             month = month.length > 1 ? month : '0' + month
-
             var day = date.getDate().toString()
             day = day.length > 1 ? day : '0' + day
-
             return day + '-' + month + '-' + year
-        },
-        showMember() {
-            location.reload()
-        },
-        text(value) {
-            if (value == true) return 'Đã đóng'
-            return 'Đang chạy'
         },
         countTime() {
             if (this.num == 0) {
@@ -1067,8 +843,8 @@ export default {
             clearTimeout(this.timeout)
             router.push('/')
         },
-        getAllProects(page) {
-            return HTTP_API_GITLAB.get(GET_ALL_PROJECT(100, page)).then((res) => res.data)
+        async getAllProects(page) {
+            return await HTTP_API_GITLAB.get(GET_ALL_PROJECT(100, page)).then((res) => res.data)
         },
         async handlerGetInfoProjects() {
             let resultCountPr = 100
@@ -1084,9 +860,6 @@ export default {
                     return (el.name = `${el.name} (${el.name_with_namespace})`)
                 })
             }
-        },
-        getUserById(id) {
-            return HTTP.get(GET_USER_NAME_BY_ID(id)).then((res) => res.data)
         },
     },
     components: { Add, Edit, Delete, Member, Export, DialogAddEdit },

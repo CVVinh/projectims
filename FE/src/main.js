@@ -61,13 +61,15 @@ import VueFlatpickr from 'vue-flatpickr-component'
 import Chart from 'primevue/chart'
 import Listbox from 'primevue/listbox'
 import Tooltip from 'primevue/tooltip';
+import {LoadingPlugin} from 'vue-loading-overlay';
+import 'vue-loading-overlay/dist/css/index.css';
 
 const app = createApp(App)
 
 app.use(PrimeVue)
 app.use(ConfirmationService)
 app.use(ToastService)
-
+app.use(LoadingPlugin);
 app.use('Divider', Divider)
 app.component('Checkbox', Checkbox)
 app.use(DialogService)

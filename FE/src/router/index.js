@@ -588,6 +588,16 @@ const router = createRouter({
             props: true,
             component: () => import('@/views/Tasks/ExportBill.vue'),
         },
+
+        {
+            path: '/workPerformances',
+            name: 'workPerformances',
+            meta: {
+                title: 'IMS - Efficiency ',
+            },
+            props: true,
+            component: () => import('@/views/Tasks/Efficiency.vue'),
+        },
     ],
 })
 

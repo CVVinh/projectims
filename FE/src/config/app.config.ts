@@ -30,14 +30,17 @@ export const ApiApplication = {
             `Project/FillterProjectByNameOfLead/${idLead}?name=${name}&pageIndex=${pageIndex}&pageSizeEnum=${pageSize}`,
         SEARCH_PROJECT_BY_NAME_STAFF: (idStaff: Number, name: string, pageIndex: Number, pageSize: Number) =>
             `Project/FillterProjectByNameOfStaff/${idStaff}?name=${name}&pageIndex=${pageIndex}&pageSizeEnum=${pageSize}`,
+        GET_ALL_PROJECT_BY_USER: (idUser: Number, APIKey: any) =>
+            `users/memberships${idUser}${APIKey}`,
     },
 
     USER: {
-        GET_ALL: 'Users/getAll',
+        GET_ALL: (pageIndex: Number, pageSize: Number) => `Users/getAll?pageIndex=${pageIndex}&pageSizeEnum=${pageSize}`,
         GET_BY_CODE: 'Users/getUserByUserCode/',
         GET_INFO: 'Users/getInfo',
         UPDATE_PROFILE: (id: number) => `Users/updateProfileUser/${id}`,
         GET_USER_BY_ID: (id: number) => `Users/getUserById/${id}`,
+        GET_USER_BY_ID_USER_GITLAB: (id: number) => `Users/getUserByIdUserGitLab/${id}`,
         GET_ALL_USER_BY_IDPROJECT: (id: number) => `Users/getAllUsersByIdProject/${id}`,
         SEARCH_USER_BY_NAME: (name: string, pageIndex: Number, pageSize: Number) =>
             `Users/SearchUserByNameOrUserCode?name=${name}&pageIndex=${pageIndex}&pageSizeEnum=${pageSize}`,
@@ -45,6 +48,7 @@ export const ApiApplication = {
             `Users/SearchMemberByName/${idProject}?name=${name}&pageIndex=${pageIndex}&pageSizeEnum=${pageSize}`,
         GET_ALL_INFO_USER_GITLAB: (pageIndex: Number, pageSize: Number, APIKey: any) =>
         `users?per_page=${pageSize}&page=${pageIndex}${APIKey}`, 
+        GET_ALL_USER_IN_PROJECT_BY_IDUSER: (idUser: number, pageIndex: Number, pageSize: Number) => `Users/getAllUsersByRoleInProjectByIdUserCurrent/${idUser}?pageIndex=${pageIndex}&pageSizeEnum=${pageSize}`,
     },
     PERMISSION_GROUP_MENU: {
         GET_PERMISSION_GROUP: 'Permission_Groups/decentralization_Group', // cu

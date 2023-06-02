@@ -616,11 +616,12 @@ namespace BE.Services.LeaveOffServices
             var data = new List<ListLeaveOffInfo>();
             try
             {
+                var getProjectPMCreated = await _appContext.Projects.Where(p => p.Leader.Equals(id) && p.IsDeleted == false).Select(p => p.UserCreated).Distinct().ToListAsync();
                 var list = (from x in _appContext.leaveOffs
                             join e in _appContext.Users on x.idLeaveUser equals e.id
                             join d in _appContext.Member_Projects on e.id equals d.member
                             join c in _appContext.Projects on d.idProject equals c.Id
-                            where c.Leader == id || x.idAcceptUser == id
+                            where (c.Leader == id || x.idAcceptUser == id) && x.idLeaveUser != id && (!getProjectPMCreated.Contains(d.member))
                             select new ListLeaveOffInfo
                             {
                                 id = x.id,
@@ -681,7 +682,7 @@ namespace BE.Services.LeaveOffServices
             var data = new List<ListLeaveOffInfo>();
             try
             {
-                var list = (from x in _appContext.leaveOffs
+                var list = await (from x in _appContext.leaveOffs
                             join c in _appContext.Projects on x.idLeaveUser equals c.Leader
                             join e in _appContext.Users on c.Leader equals e.id
                             where c.UserCreated == id || x.idAcceptUser == id
@@ -702,10 +703,33 @@ namespace BE.Services.LeaveOffServices
                                 name = e.FullName,
                                 userCode = e.userCode,
                                 flagOnDay = x.flagOnDay,
-                            }).OrderBy(x => x.createTime).Distinct().ToListAsync();
+                            }).Distinct().ToListAsync();
 
+                var listLeaveOffUserCurrent = await (from x in _appContext.leaveOffs
+                            join e in _appContext.Users on x.idLeaveUser equals e.id
+                            where x.idLeaveUser == id || x.idAcceptUser == id
+                            select new ListLeaveOffInfo
+                            {
+                                id = x.id,
+                                idLeaveUser = e.id,
+                                idAcceptUser = x.idAcceptUser,
+                                startTime = x.startTime,
+                                endTime = x.endTime,
+                                reasons = x.reasons,
+                                status = x.status,
+                                createTime = x.createTime,
+                                acceptTime = x.acceptTime,
+                                ReasonNotAccept = x.ReasonNotAccept,
+                                idCompanyBranh = x.idCompanyBranh,
+                                ReasonAccept = x.ReasonAccept,
+                                name = e.FullName,
+                                userCode = e.userCode,
+                                flagOnDay = x.flagOnDay,
+                            }).ToListAsync();
+
+                list.AddRange(listLeaveOffUserCurrent);
                 var now = DateTime.Now;
-                var update = (await list).AsEnumerable()
+                var update = list.AsEnumerable()
                     .Where(s => s.status == StatusLO.Waiting).Select(s => s.id).ToList();
 
                 var findLeavOff = await _appContext.leaveOffs.Where(s => update.Contains(s.id)).ToListAsync();
@@ -725,7 +749,7 @@ namespace BE.Services.LeaveOffServices
 
                 await _appContext.SaveChangesAsync();
 
-                data = await list;
+                data.AddRange(list.OrderBy(x => x.createTime));
                 success = true;
                 message = "Lấy tất cả dữ liệu thành công";
                 return (new BaseResponse<List<ListLeaveOffInfo>>(success, message, data));
@@ -753,52 +777,53 @@ namespace BE.Services.LeaveOffServices
 
             try
             {
-                var query = (from x in _appContext.leaveOffs
-                             join e in _appContext.Users on x.idLeaveUser equals e.id
-                             join d in _appContext.Member_Projects on e.id equals d.member
-                             join c in _appContext.Projects on d.idProject equals c.Id
-                             where c.Leader == id || x.idAcceptUser == id
-                             select new ListLeaveOffInfo
-                             {
-                                 id = x.id,
-                                 idLeaveUser = e.id,
-                                 idAcceptUser = x.idAcceptUser,
-                                 startTime = x.startTime,
-                                 endTime = x.endTime,
-                                 reasons = x.reasons,
-                                 status = x.status,
-                                 createTime = x.createTime,
-                                 acceptTime = x.acceptTime,
-                                 ReasonNotAccept = x.ReasonNotAccept,
-                                 idCompanyBranh = x.idCompanyBranh,
-                                 ReasonAccept = x.ReasonAccept,
-                                 name = e.FullName,
-                                 userCode = e.userCode,
-                                 flagOnDay = x.flagOnDay
-                             }).OrderBy(x => x.createTime).Distinct().AsQueryable();
-
+                var getProjectPMCreated = await _appContext.Projects.Where(p => p.Leader.Equals(id) && p.IsDeleted == false).Select(p => p.UserCreated).Distinct().ToListAsync();
+                var query = await (from x in _appContext.leaveOffs
+                            join e in _appContext.Users on x.idLeaveUser equals e.id
+                            join d in _appContext.Member_Projects on e.id equals d.member
+                            join c in _appContext.Projects on d.idProject equals c.Id
+                            where (c.Leader == id || x.idAcceptUser == id) && x.idLeaveUser != id && (!getProjectPMCreated.Contains(d.member))
+                            select new ListLeaveOffInfo
+                            {
+                                id = x.id,
+                                idLeaveUser = e.id,
+                                idAcceptUser = x.idAcceptUser,
+                                startTime = x.startTime,
+                                endTime = x.endTime,
+                                reasons = x.reasons,
+                                status = x.status,
+                                createTime = x.createTime,
+                                acceptTime = x.acceptTime,
+                                ReasonNotAccept = x.ReasonNotAccept,
+                                idCompanyBranh = x.idCompanyBranh,
+                                ReasonAccept = x.ReasonAccept,
+                                name = e.FullName,
+                                userCode = e.userCode,
+                                flagOnDay = x.flagOnDay,
+                            }).OrderBy(x => x.createTime).Distinct().ToListAsync();
+                
                 if (String.IsNullOrEmpty(infoDtos.fullName) == false)
                 {
                     var checkName = _appContext.Users
                         .Where(q => (q.firstName + " " + q.lastName).ToLower().Trim().Contains(infoDtos.fullName.Trim().ToLower()))
                         .ToList();
                     var idList = checkName.Select(item => item.id).ToList();
-                    query = query.Where(x => idList.Contains(x.idLeaveUser));
+                    query = query.Where(x => idList.Contains(x.idLeaveUser)).ToList();
                 }
 
                 if (infoDtos.status.Count > 0)
                 {
                     var statusList = infoDtos.status.ToList();
-                    query = query.Where(x => statusList.Contains((int)x.status));
+                    query = query.Where(x => statusList.Contains((int)x.status)).ToList();
                 }
 
                 if (infoDtos.date != null)
                 {
                     query = query.Where(x => (x.startTime.Month <= infoDtos.date.Value.Month && x.startTime.Year == infoDtos.date.Value.Year)
-                        && (x.endTime.Month >= infoDtos.date.Value.Month && x.endTime.Year == infoDtos.date.Value.Year));
+                        && (x.endTime.Month >= infoDtos.date.Value.Month && x.endTime.Year == infoDtos.date.Value.Year)).ToList();
                 }
 
-                data = await query.ToListAsync();
+                data.AddRange(query);
                 success = true;
                 message = "Lấy tất cả dữ liệu thành công";
                 return (new BaseResponse<List<ListLeaveOffInfo>>(success, message, data));
@@ -825,7 +850,7 @@ namespace BE.Services.LeaveOffServices
 
             try
             {
-                var query = (from x in _appContext.leaveOffs
+                var query = await  (from x in _appContext.leaveOffs
                              join c in _appContext.Projects on x.idLeaveUser equals c.Leader
                              join e in _appContext.Users on c.Leader equals e.id
                              where c.UserCreated == id || x.idAcceptUser == id
@@ -846,30 +871,52 @@ namespace BE.Services.LeaveOffServices
                                  name = e.FullName,
                                  userCode = e.userCode,
                                  flagOnDay = x.flagOnDay,
-                             }).OrderBy(x => x.createTime).Distinct().AsQueryable();
+                             }).OrderBy(x => x.createTime).Distinct().ToListAsync();
 
+                var listLeaveOffUserCurrent = await (from x in _appContext.leaveOffs
+                                                     join e in _appContext.Users on x.idLeaveUser equals e.id
+                                                     where x.idLeaveUser == id || x.idAcceptUser == id
+                                                     select new ListLeaveOffInfo
+                                                     {
+                                                         id = x.id,
+                                                         idLeaveUser = e.id,
+                                                         idAcceptUser = x.idAcceptUser,
+                                                         startTime = x.startTime,
+                                                         endTime = x.endTime,
+                                                         reasons = x.reasons,
+                                                         status = x.status,
+                                                         createTime = x.createTime,
+                                                         acceptTime = x.acceptTime,
+                                                         ReasonNotAccept = x.ReasonNotAccept,
+                                                         idCompanyBranh = x.idCompanyBranh,
+                                                         ReasonAccept = x.ReasonAccept,
+                                                         name = e.FullName,
+                                                         userCode = e.userCode,
+                                                         flagOnDay = x.flagOnDay,
+                                                     }).ToListAsync();
+                query.AddRange(listLeaveOffUserCurrent);
                 if (String.IsNullOrEmpty(infoDtos.fullName) == false)
                 {
                     var checkName = _appContext.Users
                         .Where(q => (q.firstName + " " + q.lastName).ToLower().Trim().Contains(infoDtos.fullName.Trim().ToLower()))
                         .ToList();
                     var idList = checkName.Select(item => item.id).ToList();
-                    query = query.Where(x => idList.Contains(x.idLeaveUser));
+                    query = query.Where(x => idList.Contains(x.idLeaveUser)).ToList();
                 }
 
                 if (infoDtos.status.Count > 0)
                 {
                     var statusList = infoDtos.status.ToList();
-                    query = query.Where(x => statusList.Contains((int)x.status));
+                    query = query.Where(x => statusList.Contains((int)x.status)).ToList();
                 }
 
                 if (infoDtos.date != null)
                 {
                     query = query.Where(x => (x.startTime.Month <= infoDtos.date.Value.Month && x.startTime.Year == infoDtos.date.Value.Year)
-                        && (x.endTime.Month >= infoDtos.date.Value.Month && x.endTime.Year == infoDtos.date.Value.Year));
+                        && (x.endTime.Month >= infoDtos.date.Value.Month && x.endTime.Year == infoDtos.date.Value.Year)).ToList();
                 }
 
-                data = await query.ToListAsync();
+                data.AddRange(query);
                 success = true;
                 message = "Lấy tất cả dữ liệu thành công";
                 return (new BaseResponse<List<ListLeaveOffInfo>>(success, message, data));

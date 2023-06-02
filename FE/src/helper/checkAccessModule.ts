@@ -193,6 +193,9 @@ export class checkAccessModule {
         if (nameModule === 'timesheetdailys') {
             return ['admin', 'pm', 'office']
         }
+        if (nameModule === 'workperformances') {
+            return ['admin', 'pm', 'office', 'lead']
+        }
     }
 
     public static checkCallAPI(module: any) {

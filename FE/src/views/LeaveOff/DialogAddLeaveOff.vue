@@ -429,7 +429,6 @@
                         },
                     }
                     const response = await HTTP_FIREBASE.post('/fcm/send', message)
-                    console.log('Message sent successfully', response)
                 } catch (error) {
                     console.log('Error sending message', error)
                 }

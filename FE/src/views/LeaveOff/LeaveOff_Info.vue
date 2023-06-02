@@ -67,7 +67,6 @@
                                     optionLabel="title"
                                     optionValue="id"
                                     placeholder="Chọn trạng thái"
-                                    display="chip"
                                     class="custom-input-h"
                                 />
                             </li>
@@ -102,8 +101,8 @@
                         :sortOrder="-1"
                         :loading="loading"
                         responsiveLayout="scroll"
-                        showGridlines="true"
-                        :globalFilterFields="['#', 'name', 'startDate', 'endDate', 'isDeleted', 'isFinished']"
+                        showGridlines
+                        :globalFilterFields="['name', 'startDate', 'endDate', 'isDeleted', 'isFinished']"
                     >
                         <template #empty> Không tìm thấy </template>
                         <template #loading>
@@ -114,7 +113,7 @@
                                 {{ index + 1 + (this.resultPgae.pageNumber - 1) * this.resultPgae.pageSize }}
                             </template>
                         </Column>
-                        <Column sortable field="name" header="Tên">
+                        <Column sortable field="name" header="Tên nhân viên">
                             <template #body="{ data }">
                                 {{ data.name }}
                             </template>
@@ -268,17 +267,15 @@ export default {
         },
     },
     methods: {
+        showError(message) {
+            this.$toast.add({ severity: 'error', summary: 'Lỗi!', detail: message, life: 2000 })
+        },
         async checkPermissionGroup() {
            if(checkAccessModule.checkCallAPI(this.$route.path.replace('/', ''))){
                    this.getLeaveOff()
            }else{
                     setTimeout(() => {
-                        this.$toast.add({
-                            severity: 'error',
-                            summary: 'Lỗi',
-                            detail: 'Người dùng không có quyền!',
-                            life: 3000,
-                        })
+                        this.showError('Người dùng không có quyền!')
                         this.$router.push('/')
                     }, 800)
            }
@@ -288,9 +285,6 @@ export default {
                 return el.id == id
             })
             return Object.assign({}, fillter[0])
-        },
-        toRegisterPage() {
-            router.push('/leaveoff/Registerlists')
         },
         async getLeaveOff() {
             LeaveOffService.getAllLeaveOffPageListInfo(this.resultPgae.pageNumber, this.resultPgae.pageSize).then(
@@ -354,7 +348,7 @@ export default {
                 item.userCode = item.user?.userCode
 
                 if (!acceptUserCache[item.idAcceptUser]) {
-                    const promise = this.getUserById(item.idAcceptUser).then((accept) => {
+                    const promise = await this.getUserById(item.idAcceptUser).then((accept) => {
                         acceptUserCache[item.idAcceptUser] = accept
                     })
                     promises.push(promise)
@@ -370,7 +364,7 @@ export default {
             const promises = []
             for (const id of ids) {
                 if (!cache[id]) {
-                    const promise = this.getUserById(id)
+                    const promise = await this.getUserById(id)
                     cache[id] = promise
                     promises.push(promise)
                 }
@@ -381,8 +375,8 @@ export default {
                 return acc
             }, {})
         },
-        getUserById(id) {
-            return HTTP.get(GET_USER_NAME_BY_ID(id)).then((res) => res.data)
+        async getUserById(id) {
+            return await HTTP.get(GET_USER_NAME_BY_ID(id)).then((res) => res.data)
         },
         async handlerFillterLeaveOff() {
             this.loading = true
@@ -450,7 +444,6 @@ export default {
                 status: this.checkStatus(el.status).title,
                 acceptBy: el.acceptBy,
             }))
-
             import('../../plugins/Export2Excel.js').then((excel) => {
                 const OBJ = data
 
@@ -464,14 +457,13 @@ export default {
                     'Trạng thái',
                     'Người duyệt',
                 ]
-
                 const Field = ['userCode', 'name', 'startTime', 'endTime', 'realTime', 'reasons', 'status', 'acceptBy']
 
                 const Data = this.FormatJSon(Field, OBJ)
                 excel.export_json_to_excel({
                     header: Header,
                     data: Data,
-                    sheetName: 'Danh sách nghỉ phép',
+                    sheetName: 'sheet1',
                     filename: 'Danh sách nghỉ phép',
                     autoWidth: true,
                     bookType: 'xlsx',
@@ -632,140 +624,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-/* .date_time_pick .mx-input-wrapper > input {
-    height: 49.79px !important;
-}
-.date_time_pick .mx-input-wrapper > i {
-    font-size: 20px !important;
-}  */
-/* date-picker {
-    display: block;
-    width: 200px;
-    height: 300px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 4px;
-    font-size: 14px;
-} */
-/* date-picker .mx-input {
-    display: inline-block;
-    box-sizing: border-box;
-    width: 1%;
-    height: 100px;
-    padding: 6px 30px;
-    padding-left: 10px;
-    font-size: 14px;
-    line-height: 1.4;
-    color: #555;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-shadow: inset 0 1px 1px rgb(0 0 0 / 8%);
-} */
-
-/* ::v-deep(.p-paginator) {
-    .p-paginator-current {
-        margin-left: auto;
-    }
-}
-
-::v-deep(.p-progressbar) {
-    height: 0.5rem;
-    background-color: #d8dadc;
-
-    .p-progressbar-value {
-        background-color: #607d8b;
-    }
-} */
-/* ::v-deep(.p-datatable.p-datatable-customers) {
-    .p-datatable-header {
-        padding: 1rem;
-        text-align: left;
-        font-size: 1.5rem;
-    }
-
-    .p-paginator {
-        padding: 1rem;
-    }
-
-    .p-datatable-thead > tr > th {
-        text-align: left;
-    }
-
-    .p-datatable-tbody > tr > td {
-        cursor: auto;
-    }
-
-    .p-dropdown-label:not(.p-placeholder) {
-        text-transform: uppercase;
-    }
-
-    .p-input-icon-left {
-        float: right;
-        margin-left: 1rem;
-        display: inline-flex;
-    }
-
-    .p-inputtext-sm {
-        font-size: 0.96rem;
-    }
-
-    .layout-left {
-        float: right;
-        display: inline;
-    }
-
-    .p-button.p-button-secondary.p-button-outlined {
-        float: right;
-        height: 46px;
-    }
-
-    .p-button.p-button-info.p-button-outlined {
-        float: right;
-        height: 46px;
-        margin-left: 10px;
-    }
-
-    // .p-datatable-header {
-    //     height: 75px;
-    // }
-
-    .nav-container {
-        position: relative;
-    }
-
-    .header-h5 {
-        position: absolute;
-        margin-top: 10px;
-    }
-
-    .header-left {
-        height: 100%;
-        display: flex;
-        flex-direction: row;
-        justify-content: end;
-        align-items: flex-end;
-        margin-right: 10px;
-    }
-
-    .mazin {
-        margin-left: 5px;
-        margin-right: 5px;
-    }
-
-    .maz {
-        margin-right: 5px;
-    }
-
-    .p-dropdown {
-        background: #ffffff;
-        border: 1px solid #ced4da;
-        transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
-        border-radius: 6px;
-        float: right;
-        height: 46px;
-    }
-} */
 .mx-input {
     display: inline-block;
     box-sizing: border-box;

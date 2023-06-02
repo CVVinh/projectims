@@ -24,31 +24,28 @@
                     </button>
                     <div class="collapse navbar-collapse mt-2" id="collapsibleNavbar">
                         <ul class="navbar-nav me-auto">
-                            <li class="nav-item me-2 mb-2">
+                            <li class="nav-item me-2 mb-2" v-if="this.showButtonNew.export">
                                 <Export
                                     @click="exportToExcelFollowRole()"
                                     :disabled="canExport"
-                                    v-if="this.showButtonNew.export"
                                     class="custom-button-h"
                                     label="Xuất Excel"
                                 />
                             </li>
-                            <li class="nav-item me-2 mb-2">
+                            <li class="nav-item me-2 mb-2" v-if="this.showButtonNew.add">
                                 <Button
                                     label="Thêm tăng ca"
                                     icon="pi pi-plus"
                                     @click="openFormAddEdit(null)"
                                     class="p-button-sm custom-button-h"
-                                    v-if="this.showButtonNew.add"
                                 />
                             </li>
-                            <li class="nav-item me-2 mb-2">
+                            <li class="nav-item me-2 mb-2" v-if="this.showButtonNew.confirmMulti">
                                 <Button
                                     label="Phê duyệt"
                                     icon="pi pi-check-square"
                                     @click="acceptMulti()"
                                     class="p-button-sm custom-button-h"
-                                    v-if="this.showButtonNew.confirmMulti"
                                 />
                             </li>
                         </ul>
@@ -96,7 +93,7 @@
                                     :options="columns"
                                     optionLabel="header"
                                     @update:modelValue="onToggle"
-                                    placeholder="Chọn "
+                                    placeholder="Thêm trường xem"
                                 />
                             </li>
                         </ul>
@@ -153,7 +150,7 @@
                                 {{ index + 1 + (this.resultPgae.pageNumber - 1) * this.resultPgae.pageSize }}
                             </template>
                         </Column>
-                        <Column field="x.user" header="Nhân viên tăng ca" sortable style="min-width: 4rem">
+                        <Column field="x.user" header="Tên nhân viên" sortable style="min-width: 4rem">
                             <template #body="{ data }">
                                 {{ data.nameUser }}
                             </template>
@@ -198,7 +195,7 @@
                                     {{ data.x.updateUser }}
                                 </template>
                             </Column> -->
-                        <Column field="x.idProject" header="Dự án" sortable style="min-width: 5rem; max-width: 15rem">
+                        <Column field="x.idProject" header="Dự án" style="min-width: 5rem; max-width: 15rem">
                             <template #body="{ data }">
                                 {{ data.name }}
                             </template>
@@ -297,11 +294,11 @@
                 >Bạn sẽ được điều hướng vào trang chủ <strong>{{ num }}</strong> giây!</medium
             >
             <template #footer>
-                <Button label="Lưu" icon="pi pi-check" @click="submit" autofocus />
+                <Button label="Hoàn tất" icon="pi pi-check" @click="redirectToHome()" autofocus class="custom-button-h"/>
             </template>
         </Dialog>
         <Dialog
-            header="Vui lòng nhập lý do từ chối tăng ca !"
+            header="Lý do từ chối tăng ca !"
             :visible="displayDialog2"
             :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
             :style="{ width: '30vw' }"
@@ -331,7 +328,7 @@
             @close="closeFormAddEdit"
             @reloadData="getAllOT"
             :idproject="this.idproject"
-            :AddOrEdit="this.edit"
+            :AddOrEdit="this.addOrEdit"
         />
         <DetailOT
             :show="DetailOT"
@@ -365,6 +362,7 @@ import { cloneVNode } from '@vue/runtime-core'
 import storeRole from '@/stores/role'
 import AddOTsDialog from './AddOTsDialog.vue'
 import { checkAccessModule } from '@/helper/checkAccessModule'
+import dayjs from 'dayjs'
 export default {
     name: 'ots',
     data() {
@@ -376,20 +374,18 @@ export default {
                 status: { value: null, matchMode: FilterMatchMode.EQUALS },
             },
             selectedColumns: null,
-            columns: null,
+            columns: [
+                { field: 'x.dateUpdate', header: 'Ngày phê duyệt' },
+                { field: 'x.dateCreate', header: 'Ngày tạo' },
+                { field: 'x.description', header: 'Mô tả' },
+                { field: 'pmName', header: 'PM' },
+                { field: 'x.note', header: 'Lý do từ chối' },
+            ],
             project: [],
-            proName: [],
-            proPM: [],
-            user: [],
-            username: [],
-            cantAdd: false,
-            token: null,
-            rolePM: true,
             displayDialog1: false,
             displayDialog2: false,
             num: 5,
             timeout: null,
-            canAccept: true,
             entered: false,
             reason: '',
             id: '',
@@ -400,17 +396,13 @@ export default {
                 { num: 2, text: 'Đã từ chối' },
                 { num: 3, text: 'Đã xóa' },
             ],
-            userInfo: [],
             selectMonth: [],
             selectedMonth: null,
             selectProject: [],
             selectedProject: null,
-            //axios: 'http://api.imsdemo.tk/api/',
-            axios: import.meta.env.VITE_VUE_API_URL,
             DetailOT: false,
             ots: 0,
             isPM: false,
-            showButton: {},
             showButtonNew: {},
             loading: true,
             displayFormAddEdit: false,
@@ -424,6 +416,7 @@ export default {
             totalMapPage: 0,
             itemIndex: 0,
             canExport: true,
+            addOrEdit: false,
         }
     },
     watch: {
@@ -434,19 +427,10 @@ export default {
             deep: true,
         },
     },
-
     async created() {
-        this.token = LocalStorage.jwtDecodeToken()
         if (checkAccessModule.checkAccessModule(this.$route.path.replace('/', '')) === true) {
             checkAccessModule.checkPermissionAction(this.$route.path.replace('/', ''), this.showButtonNew)
             await this.getAllOT()
-            this.columns = [
-                { field: 'x.dateUpdate', header: 'Ngày phê duyệt' },
-                { field: 'x.dateCreate', header: 'Ngày tạo' },
-                { field: 'x.description', header: 'Mô tả' },
-                { field: 'pmName', header: 'PM' },
-                { field: 'x.note', header: 'Lý do từ chối' },
-            ]
             this.getMonthFrom()
             this.loading = false
         } else {
@@ -454,10 +438,19 @@ export default {
             this.displayDialog1 = true
         }
     },
-    // async mounted() {
-
-    // },
     methods: {
+        countTime() {
+            if (this.num == 0) {
+                this.submit()
+                return
+            }
+            this.num = this.num - 1
+            this.timeout = setTimeout(() => this.countTime(), 1000)
+        },
+        redirectToHome() {
+            clearTimeout(this.timeout)
+            router.push('/')
+        },
         checkIsGroup(nameGroup) {
             var name = nameGroup.toLowerCase()
             if (name === 'admin') {
@@ -483,7 +476,6 @@ export default {
                     return false
                 }
             }
-
             if (name === 'office') {
                 if (checkAccessModule.isOffice() && checkAccessModule.getListNameGroup().length === 1) {
                     return true
@@ -491,7 +483,6 @@ export default {
                     return false
                 }
             }
-
             if (name === 'staff') {
                 if (checkAccessModule.isStaff()) {
                     return true
@@ -556,13 +547,6 @@ export default {
                 }
             }
         },
-        checkShowButton() {
-            if (checkAccessModule.isLead()) {
-                return false
-            } else {
-                return true
-            }
-        },
         checkShowButtonChangeData(data) {
             if (checkAccessModule.isAdmin()) {
                 return true
@@ -581,20 +565,10 @@ export default {
                 }
             }
         },
-        getIdUser() {
-            return checkAccessModule.getUserIdCurrent()
-        },
-        isAdmin() {
-            if (checkAccessModule.getListGroup().includes('1')) {
-                return true
-            } else {
-                return false
-            }
-        },
         // GET OTS BY ROLE PM
-        getOTsByPM(idPM) {
+        async getOTsByPM(idPM) {
             this.data = []
-            HTTP.get(
+            await HTTP.get(
                 `OTs/getOTsByidPM/${idPM}?pageIndex=${this.resultPgae.pageNumber}&pageSizeEnum=${this.resultPgae.pageSize}`,
             )
                 .then((res) => {
@@ -605,22 +579,19 @@ export default {
                     this.data = res.data._Data
                 })
                 .catch((err) => console.log(err))
+                .finally(() => {this.loading = false})
         },
         // GET OTS BY ROLE LEAD
-        getOTsByLead(idLEAD) {
-            HTTP.get(
+        async getOTsByLead(idLEAD) {
+            this.data = []
+            await HTTP.get(
                 `OTs/GetAllOTsByLead/${idLEAD}?pageIndex=${this.resultPgae.pageNumber}&pageSizeEnum=${this.resultPgae.pageSize}`,
             )
                 .then((res) => {
                     this.totalMapPage = res.data._totalPages
                     this.totalItem = res.data._totalItems
                     this.itemIndex = res.data._itemIndex
-                    res.data._Data.map((ele) => {
-                        this.data.push(ele)
-                    })
-                    // res.data.map((ele) => {
-                    //     this.data.push(ele)
-                    // })
+                    this.data = res.data._Data
                     this.data = this.data.filter((obj, index, self) => {
                         return index === self.findIndex((t) => t.x.id === obj.x.id)
                     })
@@ -629,35 +600,31 @@ export default {
                     }
                 })
                 .catch((err) => console.log(err))
+                .finally(() => {this.loading = false})
         },
         // GET OTS BY ROLE STAFF
-        getOTsByStaff(idSTAFF) {
-            HTTP.get(
+        async getOTsByStaff(idSTAFF) {
+            await HTTP.get(
                 `OTs/GetAllOTsByStaff/${idSTAFF}?pageIndex=${this.resultPgae.pageNumber}&pageSizeEnum=${this.resultPgae.pageSize}`,
             )
                 .then((res) => {
                     this.totalMapPage = res.data._totalPages
                     this.totalItem = res.data._totalItems
                     this.itemIndex = res.data._itemIndex
-                    res.data._Data.map((ele) => {
-                        this.data.push(ele)
-                    })
+                    this.data = res.data._Data
                     this.data = this.data.filter((obj, index, self) => {
                         return index === self.findIndex((t) => t.x.id === obj.x.id)
                     })
-                    // res.data.map((ele) => {
-                    //     this.data.push(ele)
-                    // })
                     if (res.data._Data.length > 0) {
                         this.canExport = false
                     }
                 })
                 .catch((err) => console.log(err))
+                .finally(() => {this.loading = false})
         },
         // GET OTS BY ROLE SAMPLE
-        getOTsByAdminPm() {
-            this.data = []
-            HTTP.get(`OTs/GetAllOTs?pageIndex=${this.resultPgae.pageNumber}&pageSizeEnum=${this.resultPgae.pageSize}`)
+        async getOTsByAdminPm() {
+            await HTTP.get(`OTs/GetAllOTs?pageIndex=${this.resultPgae.pageNumber}&pageSizeEnum=${this.resultPgae.pageSize}`)
                 .then((res) => {
                     this.totalMapPage = res.data._totalPages
                     this.totalItem = res.data._totalItems
@@ -668,19 +635,17 @@ export default {
                     }
                 })
                 .catch((err) => console.log(err))
+                .finally(() => {this.loading = false})
         },
-        getOTsBySample() {
-            this.data = []
-            HTTP.get(
+        async getOTsBySample() {
+            await HTTP.get(
                 `OTs/getOTBySample?pageIndex=${this.resultPgae.pageNumber}&pageSizeEnum=${this.resultPgae.pageSize}`,
             )
                 .then((res) => {
                     this.totalMapPage = res.data._totalPages
                     this.totalItem = res.data._totalItems
                     this.itemIndex = res.data._itemIndex
-                    res.data._Data.map((ele) => {
-                        this.data.push(ele)
-                    })
+                    this.data = res.data._Data
                     this.data = this.data.filter((obj, index, self) => {
                         return index === self.findIndex((t) => t.x.id === obj.x.id)
                     })
@@ -689,28 +654,21 @@ export default {
                     }
                 })
                 .catch((err) => console.log(err))
+                .finally(() => {this.loading = false})
         },
-        reloadApi() {
+        async reloadApi() {
             if (checkAccessModule.isAdmin() || checkAccessModule.isPm()) {
                 this.getAllOT()
             } else {
-                this.getOTsByLead(checkAccessModule.getUserIdCurrent())
+                await this.getOTsByLead(checkAccessModule.getUserIdCurrent())
             }
         },
-
         getFormattedDate(date) {
-            var year = date.getFullYear()
-
-            var month = (1 + date.getMonth()).toString()
-            month = month.length > 1 ? month : '0' + month
-
-            var day = date.getDate().toString()
-            day = day.length > 1 ? day : '0' + day
-
-            return day + '-' + month + '-' + year
+            var dateTime = new Date(date)
+            return dayjs(dateTime).format('DD-MM-YYYY')
         },
         acceptMulti() {
-            let bool = true
+            var bool = true
             if (this.selectedOT == null) {
                 this.showWarn('Chọn một mục để phê duyệt!')
                 return
@@ -727,27 +685,9 @@ export default {
             } else this.showWarn('Không thể phê duyệt mục không có trạng thái đang chờ!')
             this.selectedOT = []
         },
-        countTime() {
-            if (this.num == 0) {
-                this.submit()
-                return
-            }
-            this.num = this.num - 1
-            this.timeout = setTimeout(() => this.countTime(), 1000)
-        },
-        submit() {
-            clearTimeout(this.timeout)
-            router.push('/')
-        },
+        
         onToggle(value) {
             this.selectedColumns = this.columns.filter((col) => value.includes(col))
-        },
-        formatDate(value) {
-            return new Date(value).toLocaleDateString('en-CA', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-            })
         },
         async getAllOT() {
             this.data = []
@@ -769,30 +709,21 @@ export default {
                     await this.getProjectStaff()
                 }
             }
-
             if (this.data.length > 0) {
                 this.canExport = false
             } else {
                 this.canExport = true
             }
-            this.loading = false
         },
-        async getUserInfo() {
-            HTTP.get('Users/getInfo')
-                .then((res) => {
-                    this.userInfo = res.data
-                })
-                .catch((err) => console.log(err))
-        },
-        deleteData(id, token) {
-            HTTP.put('OTs/deleteOT?' + 'idOT=' + id + '&PM=' + token)
+        async deleteData(id, idUser) {
+            await HTTP.put('OTs/deleteOT?' + 'idOT=' + id + '&PM=' + idUser)
                 .then((res) => {
                     if (res.status == 200) {
                         this.showSuccess('Xóa thẻ OTs thành công.')
                     }
                 })
                 .catch((err) => {
-                    this.showWarn('Bạn không có quyền thực hiện thao tác xóa OT.')
+                    this.showWarn('Có lỗi trong quá trình thực hiện!')
                 })
         },
         color(status) {
@@ -801,10 +732,7 @@ export default {
             if (status == 2) return 'bg-danger'
             return 'bg-danger'
         },
-        add() {
-            router.push('/ots/addOT')
-        },
-        confirmDelete(id) {
+        async confirmDelete(id) {
             this.$confirm.require({
                 message: 'Bạn có chắc chắn muốn xóa tăng ca này?',
                 header: 'Xóa',
@@ -815,11 +743,9 @@ export default {
                 rejectIcon: 'pi pi-times',
                 acceptClass: 'p-button-danger CustomButtonPrimeVue',
                 rejectClass: 'p-button-secondary p-button-outlined aloha CustomButtonPrimeVue',
-                accept: () => {
+                accept: async () => {
                     this.deleteData(id, checkAccessModule.getUserIdCurrent())
-                    setTimeout(() => {
-                        this.getAllOT()
-                    }, 500)
+                    await this.getAllOT()
                 },
                 reject: () => {
                     return
@@ -827,84 +753,13 @@ export default {
             })
         },
         showSuccess(err) {
-            this.$toast.add({
-                severity: 'success',
-                summary: 'Thành công',
-                detail: err,
-                life: 3000,
-            })
+            this.$toast.add({severity: 'success',summary: 'Thành công',detail: err,life: 2000,})
         },
-
+        showWarn(message) {
+            this.$toast.add({ severity: 'warn', summary: 'Cảnh báo ', detail: message, life: 5000 })
+        },
         exportToExcelFollowRole() {
             this.dataExport = []
-            if (this.selectedOT !== null) {
-                this.data.map((ele) => {
-                    this.selectedOT.map((element) => {
-                        if (ele.x.id === element.x.id) {
-                            const object = {
-                                user: ele.usercode,
-                                nameUser: ele.nameUser,
-                                date: this.getFormattedDate(new Date(ele.x.date)),
-                                start: ele.x.start,
-                                end: ele.x.end,
-                                name: ele.name,
-                                nameLead: ele.nameLead,
-                                realTime: ele.x.realTime,
-                                dateUpdate: this.getFormattedDate(new Date(ele.x.dateUpdate)),
-                                dateCreate: this.getFormattedDate(new Date(ele.x.dateCreate)),
-                                status:
-                                    ele.x.status === 1 ? 'Đã duyệt' : ele.x.status === 0 ? 'Chưa duyệt' : 'Đã từ chối',
-                                description: ele.x.description,
-                            }
-                            this.dataExport.push(object)
-                        }
-                    })
-                })
-
-                import('../../plugins/Export2Excel.js').then((excel) => {
-                    const OBJ = this.dataExport
-                    const Header = [
-                        'Mã nhân viên',
-                        'Tên nhân viên',
-                        'Ngày tăng ca',
-                        'Giờ bắt đầu',
-                        'Giờ kết thúc',
-                        'Thời gian thực tế',
-                        'Mô tả',
-                        'Dự án',
-                        'Người quản lý',
-                        'Ngày phê duyệt',
-                        'Ngày tạo',
-                        'Trạng thái',
-                    ]
-
-                    const Field = [
-                        'user',
-                        'nameUser',
-                        'date',
-                        'start',
-                        'end',
-                        'realTime',
-                        'description',
-                        'name',
-                        'nameLead',
-                        'dateUpdate',
-                        'dateCreate',
-                        'status',
-                    ]
-
-                    const Data = this.FormatJSon(Field, OBJ)
-                    excel.export_json_to_excel({
-                        header: Header,
-                        data: Data,
-                        sheetName: 'Danh sách tăng ca',
-                        filename: 'Danh sách tăng ca',
-                        autoWidth: true,
-                        bookType: 'xlsx',
-                    })
-                })
-            } else {
-                this.dataExport = []
                 this.data.map((ele) => {
                     const object = {
                         user: ele.usercode,
@@ -922,7 +777,6 @@ export default {
                     }
                     this.dataExport.push(object)
                 })
-
                 import('../../plugins/Export2Excel.js').then((excel) => {
                     const OBJ = this.dataExport
                     const Header = [
@@ -939,7 +793,6 @@ export default {
                         'Ngày tạo',
                         'Trạng thái',
                     ]
-
                     const Field = [
                         'user',
                         'nameUser',
@@ -954,7 +807,6 @@ export default {
                         'dateCreate',
                         'status',
                     ]
-
                     const Data = this.FormatJSon(Field, OBJ)
                     excel.export_json_to_excel({
                         header: Header,
@@ -965,9 +817,6 @@ export default {
                         bookType: 'xlsx',
                     })
                 })
-            }
-
-            //Thừa api `OTs/exportExcelFollowRole/${month}/${year}/${idProject}/${this.token.listGroup[0]}/${checkAccessModule.getUserIdCurrent()
         },
         FormatJSon(FilterData, JsonData) {
             return JsonData.map((v) =>
@@ -975,31 +824,6 @@ export default {
                     return v[j]
                 }),
             )
-        },
-        exportToExcel() {
-            var month = 0
-            var year = 0
-            var idProject = 0
-            if (this.selectedMonth != null) {
-                month = this.selectedMonth.month
-                year = this.selectedMonth.year
-            }
-            if (this.selectedProject != null) idProject = this.selectedProject.code
-            HTTP.get('OTs/exportExcel/month=' + month + '&year=' + year + '&idProject=' + idProject)
-                .then((res) => {
-                    if (res.status == 200) {
-                        this.$toast.add({
-                            severity: 'success',
-                            summary: 'Thành công',
-                            detail: 'Xuất file excel thành công!',
-                            life: 3000,
-                        })
-                        window.location = res.data
-                    }
-                })
-                .catch((err) => {
-                    this.showWarn('Bạn không có quyền thực hiện thao tác xuất file excel!')
-                })
         },
         accept(accepted, id, lead) {
             this.PM = checkAccessModule.getUserIdCurrent()
@@ -1017,9 +841,7 @@ export default {
                         }
                         console.log(err)
                     })
-                setTimeout(() => {
                     this.getAllOT()
-                }, 500)
             } else {
                 this.displayDialog2 = true
                 this.id = id
@@ -1048,12 +870,9 @@ export default {
                 global: { value: null, matchMode: FilterMatchMode.CONTAINS },
                 status: { value: null, matchMode: FilterMatchMode.EQUALS },
             }
-            this.getAllOT()
             this.selectedMonth = null
             this.selectedProject = null
-        },
-        showWarn(message) {
-            this.$toast.add({ severity: 'warn', summary: 'Cảnh báo ', detail: message, life: 5000 })
+            this.getAllOT()
         },
         getMonthFrom() {
             const now = new Date()
@@ -1068,9 +887,8 @@ export default {
                 }
             }
         },
-
-        filterByStaff(month, year, idProject) {
-            HTTP.get(
+        async filterByStaff(month, year, idProject) {
+            await HTTP.get(
                 `OTs/filterByStaff/${month}/${year}/${idProject}?pageIndex=${this.resultPgae.pageNumber}&pageSizeEnum=${
                     this.resultPgae.pageSize
                 }&iduser=${checkAccessModule.getUserIdCurrent()}`,
@@ -1079,26 +897,18 @@ export default {
                     this.totalMapPage = res.data._totalPages
                     this.totalItem = res.data._totalItems
                     this.itemIndex = res.data._itemIndex
-                    res.data._Data.map((ele) => {
-                        this.data.push(ele)
-                    })
+                    this.data = res.data._Data
                     this.data = this.data.filter((element, index, self) => {
-                        return (
-                            index ===
-                            self.findIndex((obj) => {
-                                return JSON.stringify(obj) === JSON.stringify(element)
-                            })
-                        )
+                        return (index === self.findIndex((obj) => { return JSON.stringify(obj) === JSON.stringify(element)}))
                     })
                 })
                 .catch((err) => {
                     console.log(err)
                 })
+                .finally(() => {this.loading = false})
         },
-
-        filterByLead(month, year, idProject) {
-            console.log(month + ' ' + year + ' ' + idProject)
-            HTTP.get(
+        async filterByLead(month, year, idProject) {
+            await HTTP.get(
                 `OTs/filterByLead/${month}/${year}/${idProject}?pageIndex=${this.resultPgae.pageNumber}&pageSizeEnum=${
                     this.resultPgae.pageSize
                 }&iduser=${checkAccessModule.getUserIdCurrent()}`,
@@ -1111,21 +921,16 @@ export default {
                         this.data.push(ele)
                     })
                     this.data = this.data.filter((element, index, self) => {
-                        return (
-                            index ===
-                            self.findIndex((obj) => {
-                                return JSON.stringify(obj) === JSON.stringify(element)
-                            })
-                        )
+                        return (index === self.findIndex((obj) => { return JSON.stringify(obj) === JSON.stringify(element)}))
                     })
                 })
                 .catch((err) => {
                     console.log(err)
                 })
+                .finally(() => {this.loading = false})
         },
-
-        filterByOffice(month, year, idProject) {
-            HTTP.get(
+        async filterByOffice(month, year, idProject) {
+            await HTTP.get(
                 `OTs/filterByOffice/${month}/${year}/${idProject}?pageIndex=${
                     this.resultPgae.pageNumber
                 }&pageSizeEnum=${this.resultPgae.pageSize}&iduser=${checkAccessModule.getUserIdCurrent()}`,
@@ -1134,24 +939,18 @@ export default {
                     this.totalMapPage = res.data._totalPages
                     this.totalItem = res.data._totalItems
                     this.itemIndex = res.data._itemIndex
-                    res.data._Data.map((ele) => {
-                        this.data.push(ele)
-                    })
+                    this.data = res.data._Data
                     this.data = this.data.filter((element, index, self) => {
-                        return (
-                            index ===
-                            self.findIndex((obj) => {
-                                return JSON.stringify(obj) === JSON.stringify(element)
-                            })
-                        )
+                        return (index === self.findIndex((obj) => { return JSON.stringify(obj) === JSON.stringify(element)}))
                     })
                 })
                 .catch((err) => {
                     console.log(err)
                 })
+                .finally(() => {this.loading = false})
         },
-        FillterAll(month, year, idProject) {
-            HTTP.get(
+        async fillterAll(month, year, idProject) {
+            await HTTP.get(
                 `OTs/filterAll/${month}/${year}/${idProject}?pageIndex=${this.resultPgae.pageNumber}&pageSizeEnum=${this.resultPgae.pageSize}`,
             )
                 .then((res) => {
@@ -1163,8 +962,10 @@ export default {
                 .catch((err) => {
                     console.log(err)
                 })
+                .finally(() => {this.loading = false})
         },
         async Fillter() {
+            this.loading = true
             this.data = []
             var month = 0
             var year = 0
@@ -1177,19 +978,16 @@ export default {
                 idProject = this.selectedProject.code
             }
             if (checkAccessModule.checkCallAPI(this.$route.path.replace('/', ''))) {
-                await this.FillterAll(month, year, idProject)
+                await this.fillterAll(month, year, idProject)
             } else {
                 if (checkAccessModule.isOffice()) {
                     await this.filterByOffice(month, year, idProject)
-                    console.log('office');
                 }
                 if (checkAccessModule.isLead()) {
                     await this.filterByLead(month, year, idProject)
-                    console.log('lead');
                 }
                 if (checkAccessModule.isStaff()) {
                     await this.filterByStaff(month, year, idProject)
-                    console.log('staff');
                 }
             }
         },
@@ -1206,7 +1004,6 @@ export default {
                     console.log(err)
                 })
         },
-
         async getProjectLead() {
             await HTTP.get(`Project/getAllProjectByLead/${checkAccessModule.getUserIdCurrent()}`)
                 .then((res) => {
@@ -1220,7 +1017,6 @@ export default {
                     console.log(err)
                 })
         },
-
         async getProjectStaff() {
             await HTTP.get(`Project/getAllProjectByStaff/${checkAccessModule.getUserIdCurrent()}`)
                 .then((res) => {
@@ -1234,7 +1030,6 @@ export default {
                     console.log(err)
                 })
         },
-
         OpenDetailOT(id) {
             this.DetailOT = true
             this.ots = id
@@ -1248,22 +1043,19 @@ export default {
         OpenFormRefuse() {
             this.displayDialog2 = true
         },
-
         openFormAddEdit(value) {
             this.displayFormAddEdit = true
             this.idproject = value
             if (this.idproject === null) {
-                this.edit = false
+                this.addOrEdit = false
             } else {
-                this.edit = true
+                this.addOrEdit = true
             }
         },
-
         closeFormAddEdit() {
             this.displayFormAddEdit = false
             this.idproject = null
         },
-
         openConfirm(accepted, id, lead) {
             this.$confirm.require({
                 message: 'Bạn có chắc chắn xác nhận duyệt tăng ca này?',
@@ -1279,12 +1071,8 @@ export default {
                     this.accept(accepted, id, lead)
                 },
                 reject: () => {},
-                onShow: () => {
-                    //callback to execute when dialog is shown
-                },
-                onHide: () => {
-                    //callback to execute when dialog is hidden
-                },
+                onShow: () => {},
+                onHide: () => {},
             })
         },
     },
